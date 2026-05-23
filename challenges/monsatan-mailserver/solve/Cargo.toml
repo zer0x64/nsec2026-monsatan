@@ -1,0 +1,3 @@
+[workspace]
+members = ["collision_finder","env-plugin","db-plugin"]
+resolver = "3"

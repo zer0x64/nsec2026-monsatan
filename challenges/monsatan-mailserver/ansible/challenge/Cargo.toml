@@ -1,0 +1,37 @@
+[package]
+name = "monsatan-mailserver"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = [".", "plugin_packager", "plugins/domain-plugin", "plugins/hello-plugin", "plugins/quote-plugin", "plugins/uppercase-plugin", "quote_of_the_day"]
+
+[dependencies]
+axum = { version = "0.8.3", features = ["macros"] }
+clap = { version = "4.5.35", features = ["derive", "env"] }
+serde = { version = "1.0.219", features = ["derive"] }
+tokio = { version = "1.44.2", features = ["full"] }
+tower-http = { version = "0.6.2", features = ["fs", "trace"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+
+# Database
+sqlx = { version = "0.8", features = ["runtime-tokio", "mysql", "macros"] }
+
+# Authentication
+jsonwebtoken = "9"
+argon2 = "0.5"
+rand = "0.8"
+
+# Utilities
+chrono = { version = "0.4", features = ["serde"] }
+base64 = "0.22.1"
+flate2 = "1.0"
+tar = "0.4"
+wasmtime = "42.0.1"
+wasmtime-wasi = "42.0.1"
+thiserror = "2.0.18"
+ed25519-dalek = { version = "2.2.0"}
+toml = "1.0.6"
+subtle = "2.6.1"
+crc = "3.4.0"

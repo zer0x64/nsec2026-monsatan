@@ -1,0 +1,25 @@
+[package]
+name = "monsatan-checkmate"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = "0.8"
+clap = { version = "4", features = ["derive", "env"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+tower = { version = "0.5", features = ["limit", "buffer"] }
+tower-http = { version = "0.6", features = ["fs"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
+jsonwebtoken = "9"
+pbkdf2 = "0.12"
+sha2 = "0.10"
+hmac = "0.12"
+base64 = "0.22"
+rand = "0.8"
+chrono = { version = "0.4", features = ["serde"] }
+utoipa = { version = "5", features = ["axum_extras", "chrono"] }
+subtle = "2.6.1"

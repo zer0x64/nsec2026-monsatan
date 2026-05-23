@@ -1,0 +1,13 @@
+[package]
+name = "plugin_packager"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ed25519-dalek = { version = "2.2.0"}
+toml = { version = "1.0.6", features = ["display", "serde"] }
+flate2 = "1.0"
+tar = "0.4"
+serde = { version = "1.0.219", features = ["derive"] }
+clap = { version = "4.6.0", features = ["derive"] }
+crc = "3.4.0"

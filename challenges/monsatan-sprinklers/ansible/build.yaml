@@ -1,0 +1,117 @@
+# This Ansible script is used to compile your challenge, create an archive and extract that archive on to the local host.
+# This script builds a frontend using NPM and a Rust program. Change it as per your needs.
+- name: "Build container"
+  hosts: "build-container"
+  vars_files:
+    - ../track.yaml
+  tasks:
+    - name: "Load flags"
+      loop: "{{ flags }}"
+      vars:
+        key: "{{ (item.tags).discourse }}"
+        value: "{{ item.flag }}"
+      ansible.builtin.set_fact:
+        track_flags: "{{ track_flags | default({}) | combine({key: value}) }}"
+
+    - name: Check if IPv4 address is set
+      ansible.builtin.debug:
+        msg: IPv4 address is set
+      when: ansible_all_ipv4_addresses | length > 0
+
+    - name: Initial System Upgrade
+      ansible.builtin.apt:
+        update_cache: true
+        install_recommends: false
+        upgrade: full
+
+    # Install the tools required to compile your code such as npm, nodejs, gcc...
+    - name: Install dependencies to build the track
+      ansible.builtin.apt:
+        name:
+          - curl
+          - build-essential
+          - cmake
+          - openssl
+          - libssl-dev
+        state: present
+
+    - name: Copy the challenge sources
+      ansible.builtin.copy:
+        src: challenge/
+        dest: /tmp/monsatan-sprinklers
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Scrub host build directory
+      ansible.builtin.file:
+        path: /tmp/monsatan-sprinklers/build
+        state: absent
+
+    - name: Create build directory
+      ansible.builtin.file:
+        path: /tmp/monsatan-sprinklers/build
+        state: directory
+        mode: "0755"
+
+    - name: Create makefile
+      ansible.builtin.command:
+        cmd: cmake .. -DCMAKE_BUILD_TYPE=Release
+        chdir: /tmp/monsatan-sprinklers/build
+
+    - name: Build server binary
+      ansible.builtin.command:
+        cmd: make monsatan-sprinklers -j2
+        chdir: /tmp/monsatan-sprinklers/build
+
+    - name: Create CLI build directory
+      ansible.builtin.file:
+        path: /tmp/monsatan-sprinklers/build-cli
+        state: directory
+        mode: "0755"
+
+    - name: Create CLI makefile
+      ansible.builtin.command:
+        cmd: cmake .. -DCMAKE_BUILD_TYPE=Debug
+        chdir: /tmp/monsatan-sprinklers/build-cli
+
+    - name: Build CLI binary
+      ansible.builtin.command:
+        cmd: make sprinklerbotctl -j2
+        chdir: /tmp/monsatan-sprinklers/build-cli
+
+    - name: Create dist directory
+      ansible.builtin.file:
+        path: /tmp/dist/monsatan-sprinklers
+        state: directory
+        mode: "0755"
+
+    - name: Copy server binary
+      ansible.builtin.copy:
+        remote_src: true
+        src: /tmp/monsatan-sprinklers/build/monsatan-sprinklers
+        dest: /tmp/dist/monsatan-sprinklers/monsatan-sprinklers
+        owner: root
+        group: root
+        mode: "0744"
+
+    # Create a TAR archive with the compiled program
+    - name: Create archive of build
+      community.general.archive:
+        path: /tmp/dist/monsatan-sprinklers
+        dest: /tmp/build.tar
+        format: tar
+        mode: "0644"
+
+    # Extract the archive from the build container and save it on the local host
+    - name: Fetch archive
+      ansible.builtin.fetch:
+        src: /tmp/build.tar
+        dest: /tmp/nsec/monsatan-sprinklers.tar
+        flat: true
+
+    - name: Fetch CLI
+      ansible.builtin.fetch:
+        src: /tmp/monsatan-sprinklers/build-cli/sprinklerbotctl
+        dest: /tmp/nsec/sprinklerbotctl
+        flat: true

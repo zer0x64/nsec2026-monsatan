@@ -1,0 +1,12 @@
+# This is an example post after submitting a flag.
+type: post
+# This should be the same for all the posts in the whole track and should match the original topic YAML filename.
+topic: monsatan-sprinklers
+trigger:
+  type: flag
+  # Name of the discourse tag in track.yaml related to your flag.
+  tag: monsatan_sprinklers_flag_1
+api:
+  user: Axolotzl
+body: |-
+  An undocumented command? I wonder what else they could be hiding... anyway, this is a nice side quest and all, but let's get back to our main objective

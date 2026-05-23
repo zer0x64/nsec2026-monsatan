@@ -1,0 +1,662 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Checkmate API",
+    "description": "Chess-themed dating app backend",
+    "license": {
+      "name": ""
+    },
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/login": {
+      "post": {
+        "tags": [
+          "crate::routes::auth"
+        ],
+        "summary": "Authenticate with an existing account.",
+        "description": "Re-derives the PBKDF2 hash from the supplied password and compares it to\nthe stored hash.  Returns a signed JWT on success.",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid username or password"
+          }
+        }
+      }
+    },
+    "/api/matches": {
+      "get": {
+        "tags": [
+          "crate::routes::matches"
+        ],
+        "summary": "Return all usernames that have mutually liked the authenticated user.",
+        "operationId": "get_matches",
+        "responses": {
+          "200": {
+            "description": "List of matched usernames",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/next": {
+      "get": {
+        "tags": [
+          "crate::routes::users"
+        ],
+        "summary": "Return a random user that the authenticated user has not yet swiped on.",
+        "description": "Returns `404 Not Found` when every other user has already been swiped.",
+        "operationId": "get_next",
+        "responses": {
+          "200": {
+            "description": "Next unswiped user profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "No more users to swipe on"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/register": {
+      "post": {
+        "tags": [
+          "crate::routes::auth"
+        ],
+        "summary": "Register a new user account.",
+        "description": "Validates input, hashes the password with PBKDF2-SHA512, stores the user,\nand returns a signed JWT.",
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input (empty username or password)"
+          },
+          "409": {
+            "description": "Username already taken"
+          }
+        }
+      }
+    },
+    "/api/user/{username}": {
+      "get": {
+        "tags": [
+          "crate::routes::users"
+        ],
+        "summary": "Get the public profile of any user by username.",
+        "operationId": "get_user",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "description": "Username of the profile to fetch",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRow"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/user/{username}/contact": {
+      "get": {
+        "tags": [
+          "crate::routes::users"
+        ],
+        "summary": "Get the private contact information of a matched user.",
+        "description": "Returns `403 Forbidden` when the authenticated user is not yet matched\nwith the requested user.",
+        "operationId": "get_contact",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "description": "Username whose contact info to fetch",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Not matched with this user"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/user/{username}/dm": {
+      "get": {
+        "tags": [
+          "crate::routes::messages"
+        ],
+        "summary": "Retrieve the full conversation between the authenticated user and another user.",
+        "description": "Both users must be mutually matched; returns `403 Forbidden` otherwise.",
+        "operationId": "get_messages",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "description": "Username of the other participant",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MessageResponse"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Not matched with this user"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "crate::routes::messages"
+        ],
+        "summary": "Send a direct message to a matched user.",
+        "description": "Both users must be mutually matched; returns `403 Forbidden` otherwise.\nReturns the newly created message on success.",
+        "operationId": "send_message",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "description": "Username of the recipient",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Message sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Not matched with this user"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/user/{username}/swipe": {
+      "post": {
+        "tags": [
+          "crate::routes::users"
+        ],
+        "summary": "Record a like or pass on another user's profile.",
+        "description": "Returns `{ \"matched\": true }` when this swipe created a mutual match.",
+        "operationId": "swipe",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "description": "Username of the user being swiped on",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwipeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Swipe recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwipeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ContactRequest": {
+        "type": "object",
+        "description": "Optional contact details supplied at registration time.",
+        "properties": {
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "location": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ContactResponse": {
+        "type": "object",
+        "description": "Private contact information, only visible to matched users.",
+        "required": [
+          "phone",
+          "email",
+          "location"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "description": "Body for `POST /api/login`.",
+        "required": [
+          "username",
+          "password"
+        ],
+        "properties": {
+          "password": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "MatchesResponse": {
+        "type": "object",
+        "description": "List of usernames that mutually liked the authenticated user.",
+        "required": [
+          "matches"
+        ],
+        "properties": {
+          "matches": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "MessageResponse": {
+        "type": "object",
+        "description": "A single direct message.",
+        "required": [
+          "id",
+          "sender",
+          "content",
+          "sentAt"
+        ],
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sender": {
+            "type": "string"
+          },
+          "sentAt": {
+            "type": "string"
+          }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "description": "Body for `POST /api/register`.",
+        "required": [
+          "username",
+          "password"
+        ],
+        "properties": {
+          "bio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contact": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ContactRequest"
+              }
+            ]
+          },
+          "password": {
+            "type": "string"
+          },
+          "profilePicture": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional profile picture, supplied as a base64-encoded string."
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "SendMessageRequest": {
+        "type": "object",
+        "description": "Body for `POST /api/user/:username/dm`.",
+        "required": [
+          "content"
+        ],
+        "properties": {
+          "content": {
+            "type": "string"
+          }
+        }
+      },
+      "SwipeRequest": {
+        "type": "object",
+        "description": "Body for `POST /api/user/:username/swipe`.",
+        "required": [
+          "liked"
+        ],
+        "properties": {
+          "liked": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SwipeResponse": {
+        "type": "object",
+        "description": "Result of a swipe action.",
+        "required": [
+          "matched"
+        ],
+        "properties": {
+          "matched": {
+            "type": "boolean",
+            "description": "Whether this swipe created a mutual match."
+          }
+        }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "description": "Returned after a successful register or login.",
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "description": "Public profile information for a user.",
+        "required": [
+          "username",
+          "bio",
+          "rating"
+        ],
+        "properties": {
+          "bio": {
+            "type": "string"
+          },
+          "profilePicture": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Base64-encoded profile picture, if one was set."
+          },
+          "rating": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "UserRow": {
+        "type": "object",
+        "description": "Raw database row from the `users` table.",
+        "required": [
+          "username",
+          "passwordPbkdf2Hash",
+          "passwordSalt",
+          "bio",
+          "rating"
+        ],
+        "properties": {
+          "bio": {
+            "type": "string"
+          },
+          "passwordPbkdf2Hash": {
+            "type": "string",
+            "description": "Base64-encoded PBKDF2-SHA512 hash of the password."
+          },
+          "passwordSalt": {
+            "type": "string",
+            "description": "Base64-encoded random salt used for hashing."
+          },
+          "profilePicture": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional profile picture stored as a base64-encoded string."
+          },
+          "rating": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

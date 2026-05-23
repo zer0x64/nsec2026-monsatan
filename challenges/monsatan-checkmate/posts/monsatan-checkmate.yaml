@@ -1,0 +1,22 @@
+# This is the original message for the track.
+type: topic
+api:
+  user: Axolotzl
+trigger:
+  type: flag
+  # Name of the discourse tag in track.yaml related to your flag.
+  tag:
+    - monsatan_kiosk_flag_1
+    - monsatan_invoices_flag_1
+    - monsatan_chatbot_flag_3
+    - monsatan_impact_study_flag_5
+  threshold: 2
+title: "Monsatan - Checkmate"
+body: |-
+  I've got a person of interest and I need you to get me some details. I have been doing my OSINT and I found a post somewhere about meeting this creep on a matchmaking website for chess. The weirdo has been using it to meet people, and it is time for us to bring his actions to light. But I'll need details.
+  
+  I know nothing about chess. Hopefully you can figure things out here: [http://checkmate.ctf/](http://checkmate.ctf/)
+  
+  I attached a picture of what he looks like: [The creep](https://dl.nsec/profile.png)
+  
+  Oh, just so you know, he kinda happens to be a regional representative for Monsatan. Killing a bird with two stones.

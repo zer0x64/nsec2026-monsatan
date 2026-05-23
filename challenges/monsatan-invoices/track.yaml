@@ -1,0 +1,48 @@
+name: monsatan-invoices
+description: "Prove that Monsatan is a client of Verdachem Industries, a very shady company that deals in pesticides"
+# Set to true when the person responsible of the theme has fully integrated the track with the scenario, which implies he wrote the discourse posts.
+integrated_with_scenario: true
+
+contacts:
+  # Who created the challenges. Use either handles or real names.
+  dev:
+    - zer0x64 (Philippe Dugre)
+  # Who did/does quality assurance on the challenge
+  qa:
+    - twisted (Simon Bouchard)
+  # Who can offer support regarding the challenge during the CTF.
+  support:
+    - zer0x64 (Philippe Dugre)
+    - olipro007 (Olivier St-Jean)
+    - junior_n30 (Jean-Francois Blain)
+
+flags:
+  # The flag string
+  - flag: FLAG-{e2749e7242053c78fe45594f6882f18c}
+    # How many points for the flag
+    value: 2
+    # Description of the flag. This text will be displayed to the participants AFTER they submit the flag if they run the `askgod history` command.
+    description: Found Monsatan's invoice for verdachem pesticides.
+    # The text the participants see AFTER they submit the flag.
+    return_string: "[monsatan-invoices] 1/1 Sequential IDs are bad IDs. At least the government isn't requiring them."
+    # CFSS string based on https://github.com/res260/cfss
+    cfss: "CFSS:0.3/TS:B/E:L/HSFC:N=2-4"
+    tags:
+      # Name of the discourse trigger for this flag. If a discourse post in the posts/ directory has this trigger, it will be posted when this flag is submitted.
+      # This value can also be used to reference flags in Ansible playbooks. See the "Load Flags" task in deploy.yaml.
+      discourse: monsatan_invoices_flag_1
+      ui_gif: proof.gif
+
+services:
+  # List of network services running for the track.
+  # Each service name must be unique for a given instance (container/VM).
+  - name: HTTP
+    # Name of the container or VM
+    instance: monsatan-invoices
+    # The IPv6 address was randomly generated from the MAC Address (hwaddr) and the subnets defined in main.tf.
+    # If you need other machines, you can choose another MAC Address and get the IPv6 from the MAC AND the IPv6 subnet (9000:d37e:c40b:acbf) at https://eui64-calc.princelle.org/
+    address: "9000:d37e:c40b:acbf:216:3eff:fe72:df5e"
+    # On what port does the service listens to
+    port: 80
+    # For automated checks during the CTF. This alerts us if something is wrong with the service.
+    check: http

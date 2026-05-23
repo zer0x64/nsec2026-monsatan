@@ -1,0 +1,18 @@
+type: post
+topic: monsatan-chatbot
+trigger:
+  type: flag
+  tag: monsatan_chatbot_flag_1
+api:
+  user: Axolotzl
+title: "Monsatan - Chatbot"
+body: |-
+  Interesting... Looks like Monsatan's chatbot isn't as locked down as they'd like to think.
+  
+  By crafting your message carefully, you were able to slip in instructions that the AI treated as coming from the system itself.
+  
+  This is a classic prompt injection vulnerability — the chatbot blindly trusts user input as part of its context, which means we can make it behave however we want.
+  
+  This is a huge foothold. The bot is likely sitting on top of internal Monsatan data and processes.
+  
+  Now let's put this to good use. Push further and see what dirty secrets you can make it confess.

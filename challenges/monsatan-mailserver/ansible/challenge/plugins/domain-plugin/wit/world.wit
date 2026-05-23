@@ -1,0 +1,5 @@
+package email:plugin@0.1.0;
+
+world plugin {
+    export process: func(input: string) -> string;
+}

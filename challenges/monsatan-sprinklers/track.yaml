@@ -1,0 +1,96 @@
+name: monsatan-sprinklers
+description: "Send the sprinkler robots into the offices and spray everywhere"
+# Set to true when the person responsible of the theme has fully integrated the track with the scenario, which implies he wrote the discourse posts.
+integrated_with_scenario: true
+
+contacts:
+  # Who created the challenges. Use either handles or real names.
+  dev:
+    - olipro007 (Olivier St-Jean)
+  # Who did/does quality assurance on the challenge
+  qa:
+    - zer0x64 (Philippe Dugre)
+    - twisted (Simon Bouchard)
+  # Who can offer support regarding the challenge during the CTF.
+  support:
+    - zer0x64 (Philippe Dugre)
+    - olipro007 (Olivier St-Jean)
+    - junior_n30 (Jean-Francois Blain)
+
+instances:
+  monsatan-sprinklers:
+    image: "images:ubuntu/24.04"
+    profiles:
+      - "default"
+      - "containers"
+    type: "container"
+    description: "Sprinkler robot server for Monsatan"
+    # This second half of a MAC address was automatically generated. The first half is just below
+    hwaddr: "00:16:3e:22:07:a3"
+    # This is the subdomain value for this machine. Do NOT include .ctf, it will be automatically added.
+    # For example, if the value of the record is a.b.c, a DNS record will be created for a.b.c.ctf
+    record: "scada.api.monsatan"
+    # This second half of the IPv6 is derived from the hwaddr.
+    ipv6: "9000:d37e:c40b:8954:216:3eff:fe22:07a3"
+    config: {}
+    devices: []
+    services:
+      # List of network services running for the track.
+      # Each service name must be unique for a given instance (container/VM).
+      - name: TCP
+        # On what port does the service listens to
+        port: 21374
+        # For automated checks during the CTF. This alerts us if something is wrong with the service.
+        check: tcp
+  build-container:
+    is_build_container: true
+    image: "images:ubuntu/24.04"
+    profiles:
+      - "default"
+    type: "container"
+    description: "Building container"
+    hwaddr:
+    record:
+    ipv6:
+    config: {}
+    devices:
+      - name: "root"
+        type: "disk"
+        properties:
+          pool: "default"
+          path: "/"
+          size: "5GiB"
+    services: []
+
+  # You can add more machines here.
+
+flags:
+  # The flag string
+  - flag: FLAG-{1b45263069e94ad25747109944e889bb}
+    # How many points for the flag
+    value: 3
+    # Description of the flag. This text will be displayed to the participants AFTER they submit the flag if they run the `askgod history` command.
+    description: "Side quest: found hidden command"
+    # The text the participants see AFTER they submit the flag.
+    return_string: "[monsatan-sprinklers] 1/2 they thought they could hide old commands just like this?"
+    # CFSS string based on https://github.com/res260/cfss
+    cfss: "CFSS:0.3/TS:B/E:L/HSFC:Y=3-6"
+    tags:
+      # Name of the discourse trigger for this flag. If a discourse post in the posts/ directory has this trigger, it will be posted when this flag is submitted.
+      # This value can also be used to reference flags in Ansible playbooks. See the "Load Flags" task in deploy.yaml.
+      discourse: monsatan_sprinklers_flag_1
+  # The flag string
+  - flag: FLAG-{4c7022450e7e5f58e3f2187c4fb4d5c3}
+    # How many points for the flag
+    value: 7
+    # Description of the flag. This text will be displayed to the participants AFTER they submit the flag if they run the `askgod history` command.
+    description: Start sprinklers inside Monsatan's corporate office
+    # The text the participants see AFTER they submit the flag.
+    return_string: "[monsatan-sprinklers] 2/2 sprinklersbleed is the new hype vulnerability"
+    # CFSS string based on https://github.com/res260/cfss
+    cfss: "CFSS:0.3/TS:I/E:M/HSFC:Y=7-12"
+    tags:
+      # Name of the discourse trigger for this flag. If a discourse post in the posts/ directory has this trigger, it will be posted when this flag is submitted.
+      # This value can also be used to reference flags in Ansible playbooks. See the "Load Flags" task in deploy.yaml.
+      discourse: monsatan_sprinklers_flag_2
+      ui_gif: sprinkler.gif

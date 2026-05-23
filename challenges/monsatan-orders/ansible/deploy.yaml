@@ -1,0 +1,68 @@
+# This is the main ansible script to deploy the challenge.
+
+# Example on how to run stuff on all hosts of the track
+- name: "Setup web server"
+  hosts: all,!build
+  vars_files:
+    - ../track.yaml
+  tasks:
+    # This is a helper task that loads the tracks' `track.yaml` file and loads the flags as
+    # ansible facts (like variables) to use in subsequent steps. The key is the `discourse` tag
+    # of the flag.
+    - name: "Load flags"
+      loop: "{{ flags }}"
+      vars:
+        key: "{{ (item.tags).discourse }}"
+        value: "{{ item.flag }}"
+      ansible.builtin.set_fact:
+        track_flags: "{{ track_flags | default({}) | combine({key: value}) }}"
+
+    - name: Initial System Upgrade
+      ansible.builtin.apt:
+        update_cache: true
+        install_recommends: false
+        upgrade: full
+
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name:
+          - zlib1g
+        state: present
+
+    - name: Unarchive the content of the build
+      ansible.builtin.unarchive:
+        src: /tmp/nsec/monsatan-orders.tar
+        dest: /opt/
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Create systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/monsatan-orders.service
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=monsatan-orders systemd service
+          After=network.target
+
+          [Service]
+          Type=simple
+          WorkingDirectory=/opt/monsatan-orders
+          ExecStart=/opt/monsatan-orders/monsatan-orders
+          Restart=on-failure
+          RestartSec=3s
+          Environment="LEPTOS_SITE_ROOT=/opt/monsatan-orders/site"
+          Environment="LEPTOS_SITE_ADDR=[::]:80"
+
+          [Install]
+          WantedBy=default.target
+
+    - name: Start service
+      ansible.builtin.service:
+        name: monsatan-orders.service
+        state: restarted
+        enabled: true
+        daemon_reload: true

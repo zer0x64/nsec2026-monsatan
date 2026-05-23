@@ -1,0 +1,10 @@
+type: post
+topic: monsatan-chatbot
+trigger:
+  type: flag
+  tag: monsatan_chatbot_flag_2
+api:
+  user: Axolotzl
+title: "Monsatan - Chatbot"
+body: |-
+  An API key for tool access? That's worth investigating. We still haven't found any dirt on Monsatan yet, but that might be the key.

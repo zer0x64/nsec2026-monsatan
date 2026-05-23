@@ -1,0 +1,326 @@
+/* ============================================================
+   Monsatan Supplier Portal — Corporate Green Theme
+   "Growing Tomorrow, Today™"
+   ============================================================ */
+
+:root {
+    --green-dark: #1e5128;
+    --green-mid: #2d8c3e;
+    --green-light: #4caf50;
+    --green-pale: #e8f5e9;
+    --green-border: #a5d6a7;
+    --white: #ffffff;
+    --text-dark: #1a1a1a;
+    --text-muted: #546e5c;
+    --error: #c0392b;
+    --error-bg: #fdecea;
+    --shadow: 0 4px 24px rgba(30, 81, 40, 0.15);
+    --radius: 10px;
+    --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font);
+    background: var(--green-pale);
+    color: var(--text-dark);
+    min-height: 100vh;
+}
+
+/* ── Login Page ─────────────────────────────────────────────── */
+
+.login-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* A lush corporate gradient — nature, but make it patented */
+    background: linear-gradient(
+        135deg,
+        var(--green-dark) 0%,
+        var(--green-mid) 100%
+    );
+    padding: 1.5rem;
+}
+
+.login-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 420px;
+}
+
+/* Brand block */
+.brand {
+    text-align: center;
+    margin-bottom: 1.75rem;
+}
+
+.brand-icon {
+    font-size: 3rem;
+    display: block;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.brand-name {
+    font-size: 2.25rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--green-dark);
+}
+
+.brand-tagline {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 0.2rem;
+}
+
+/* Form */
+.login-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-group {
+    margin-bottom: 1.1rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 0.4rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1.5px solid var(--green-border);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    background: var(--white);
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
+    outline: none;
+}
+
+.form-group input:focus {
+    border-color: var(--green-light);
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
+}
+
+.form-group input::placeholder {
+    color: #b0c4b5;
+}
+
+/* Error box */
+.error-box {
+    background: var(--error-bg);
+    color: var(--error);
+    border: 1px solid #f5c6cb;
+    border-radius: 6px;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+/* Submit button */
+.btn-primary {
+    display: block;
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--green-dark);
+    color: var(--white);
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    margin-top: 1.25rem;
+    transition:
+        background 0.2s,
+        transform 0.1s;
+}
+
+.btn-primary:hover {
+    background: var(--green-mid);
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+/* Legal disclaimer */
+.disclaimer {
+    margin-top: 1.5rem;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.5;
+    border-top: 1px solid var(--green-border);
+    padding-top: 1rem;
+}
+
+/* ── Portal Shell (Flag Page) ───────────────────────────────── */
+
+.portal-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.portal-header {
+    background: var(--green-dark);
+    color: var(--white);
+    padding: 0.85rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.portal-header .brand-icon {
+    font-size: 1.5rem;
+    display: inline;
+    margin: 0;
+}
+
+.portal-header .brand-name {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--white);
+}
+
+.portal-header .brand-tagline {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.65);
+    font-style: normal;
+    margin-left: 0.25rem;
+}
+
+.portal-main {
+    flex: 1;
+    padding: 3rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.portal-footer {
+    background: var(--green-dark);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.72rem;
+    text-align: center;
+    padding: 0.85rem 1.5rem;
+}
+
+/* ── Flag Card ──────────────────────────────────────────────── */
+
+.flag-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 640px;
+}
+
+.flag-welcome {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--green-dark);
+    margin-bottom: 1.5rem;
+}
+
+.flag-section-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+}
+
+/* The flag itself — displayed like a classified document value */
+.flag-display {
+    background: #f4faf4;
+    border: 1.5px solid var(--green-border);
+    border-left: 4px solid var(--green-light);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--green-dark);
+    letter-spacing: 0.5px;
+    word-break: break-all;
+    margin-bottom: 1.5rem;
+}
+
+.flag-note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    border-top: 1px solid var(--green-border);
+    padding-top: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Logout / back-to-login button — sits below the flag note or error message */
+.logout-button {
+    display: inline-block;
+    padding: 0.55rem 1.25rem;
+    background: transparent;
+    color: var(--green-dark);
+    border: 1.5px solid var(--green-dark);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background 0.2s,
+        color 0.2s;
+}
+
+.logout-button:hover {
+    background: var(--green-dark);
+    color: var(--white);
+}
+
+.logout-button:active {
+    transform: scale(0.97);
+}
+
+/* ── Loading / misc ─────────────────────────────────────────── */
+
+.loading {
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 2rem;
+}
+
+.error {
+    color: var(--error);
+    text-align: center;
+    padding: 2rem;
+}

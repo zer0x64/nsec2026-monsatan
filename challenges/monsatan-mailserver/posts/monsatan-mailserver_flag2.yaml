@@ -1,0 +1,26 @@
+# This is an example post after submitting a flag.
+type: post
+# This should be the same for all the posts in the whole track and should match the original topic YAML filename.
+topic: monsatan-mailserver
+trigger:
+  type: flag
+  # Name of the discourse tag in track.yaml related to your flag.
+  tag: monsatan_mailserver_flag_2
+api:
+  user: Milo
+body: |-
+  Stop it!
+  
+  Yes we fight capitalism, but this is going too far. This is personal information. We must stay ethical, otherwise we're getting worse than our enemies.
+  
+  I know how much you hate Monsatan, Axolotzl. We're family after all.
+  
+  We'll hand anything legally actionable to the right folks. But a lot of people really dislike Monsatan, and I don't want blood on our hands.
+
+  I am ordering you to move on. I still applaud your technical mastery for succeeding in this. Please send me the access now.
+  
+  
+  > **YOU HAVE A CHOICE:** 
+  > Do you disobey Milo? The two options are worth 0 points and don't unlock any additional challenges. This is just for your story conclusion. You can only submit one of the two flags.
+  1. Order - You hand over the files: FLAG-{18480821ORDER54303867}
+  2. Chaos - You doxx the CEO of Monsatan: FLAG-{7882008CHAOS27550727}

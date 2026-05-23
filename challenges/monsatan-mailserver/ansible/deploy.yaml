@@ -1,0 +1,147 @@
+# This is the main ansible script to deploy the challenge.
+
+# Example on how to run stuff on all hosts of the track
+- name: "Setup web server"
+  hosts: all,!build
+  vars_files:
+    - ../track.yaml
+  tasks:
+    # This is a helper task that loads the tracks' `track.yaml` file and loads the flags as
+    # ansible facts (like variables) to use in subsequent steps. The key is the `discourse` tag
+    # of the flag.
+    - name: "Load flags"
+      loop: "{{ flags }}"
+      vars:
+        key: "{{ (item.tags).discourse }}"
+        value: "{{ item.flag }}"
+      ansible.builtin.set_fact:
+        track_flags: "{{ track_flags | default({}) | combine({key: value}) }}"
+
+    - name: Initial System Upgrade
+      ansible.builtin.apt:
+        update_cache: true
+        install_recommends: false
+        upgrade: full
+
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name:
+          - mariadb-server
+        state: present
+
+    - name: Check for mariadb setup lock
+      ansible.builtin.stat:
+        path: /opt/mariadb.lock
+      register: mariadb_lock
+
+    - name: Install MariaDB
+      ansible.builtin.command: /usr/bin/mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
+      when: not mariadb_lock.stat.exists
+      changed_when: false
+
+    - name: Start MariaDB
+      ansible.builtin.service:
+        name: mysql
+        state: restarted
+        enabled: true
+        daemon_reload: true
+      when: not mariadb_lock.stat.exists
+
+    - name: Setup mariadb
+      ansible.builtin.shell: |
+        mysql -sfu root <<EOS
+        UPDATE mysql.user SET Password=PASSWORD('{{ track_flags["monsatan_mailserver_flag_1"] }}') WHERE User='root';
+        DELETE FROM mysql.user WHERE User='';
+        DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+        DROP DATABASE IF EXISTS test;
+        DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
+        CREATE DATABASE mailserver;
+        GRANT ALL PRIVILEGES on *.* to 'root'@'localhost' IDENTIFIED BY '{{ track_flags["monsatan_mailserver_flag_1"] }}';
+        FLUSH PRIVILEGES;
+        EOS
+      when: not mariadb_lock.stat.exists
+
+    - name: Setup mariadb
+      ansible.builtin.shell: |
+        mysql --user=root --password={{ track_flags["monsatan_mailserver_flag_1"] }} mailserver <<EOS
+        {{ lookup('file', 'challenge/init.sql') }}
+        EOS
+        touch /opt/mariadb.lock
+      when: not mariadb_lock.stat.exists
+
+    - name: Set mariadb to use ipv6
+      ansible.builtin.replace:
+        path: /etc/mysql/mariadb.conf.d/50-server.cnf
+        regexp: '^bind-address\s*=.*$'
+        replace: "bind-address = ::1"
+
+    - name: Restart mariadb
+      ansible.builtin.service:
+        name: mariadb
+        state: restarted
+
+    - name: Unarchive the content of the build
+      ansible.builtin.unarchive:
+        src: /tmp/nsec/monsatan-mailserver.tar
+        dest: /opt/
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Create systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/monsatan-mailserver.service
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=monsatan-mailserver systemd service
+          After=network.target
+
+          [Service]
+          Type=simple
+          WorkingDirectory=/opt/monsatan-mailserver
+          ExecStart=/opt/monsatan-mailserver/monsatan-mailserver
+          Environment="BIND_ADDRESS=[::]:80"
+          Environment="DB_STRING=mysql://root:{{ track_flags["monsatan_mailserver_flag_1"] }}@localhost:3306/mailserver"
+          Environment="DOMAIN_NAME=monsatan.ctf"
+          Restart=on-failure
+          RestartSec=3s
+
+          [Install]
+          WantedBy=default.target
+
+    - name: Create quote of the day systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/quote_of_the_day.service
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=quote_of_the_day systemd service
+          After=network.target
+
+          [Service]
+          Type=simple
+          WorkingDirectory=/opt/monsatan-mailserver
+          ExecStart=/opt/monsatan-mailserver/quote_of_the_day --address "[::1]:3001"
+          Restart=on-failure
+          RestartSec=3s
+
+          [Install]
+          WantedBy=default.target
+
+    - name: Start services
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: restarted
+        enabled: true
+        daemon_reload: true
+      loop:
+        - quote_of_the_day.service
+        - monsatan-mailserver.service
+
+    - name: Reboot
+      ansible.builtin.reboot:

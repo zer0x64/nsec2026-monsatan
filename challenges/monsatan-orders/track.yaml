@@ -1,0 +1,82 @@
+name: monsatan-orders
+description: "Hack into the supply portal for Monsatan's employee to cancel all their pesticide orders"
+# Set to true when the person responsible of the theme has fully integrated the track with the scenario, which implies he wrote the discourse posts.
+integrated_with_scenario: true
+
+contacts:
+  # Who created the challenges. Use either handles or real names.
+  dev:
+    - zer0x64 (Philippe Dugre)
+  # Who did/does quality assurance on the challenge
+  qa:
+    - twisted (Simon Bouchard)
+  # Who can offer support regarding the challenge during the CTF.
+  support:
+    - zer0x64 (Philippe Dugre)
+    - olipro007 (Olivier St-Jean)
+    - junior_n30 (Jean-Francois Blain)
+
+instances:
+  monsatan-orders:
+    image: "images:ubuntu/24.04"
+    profiles:
+      - "default"
+      - "containers"
+    type: "container"
+    description: "Monsatan's Ordering Portal"
+    # This second half of a MAC address was automatically generated. The first half is just below
+    hwaddr: "00:16:3e:6c:c3:b0"
+    # This is the subdomain value for this machine. Do NOT include .ctf, it will be automatically added.
+    # For example, if the value of the record is a.b.c, a DNS record will be created for a.b.c.ctf
+    record: "supply.monsatan"
+    # This second half of the IPv6 is derived from the hwaddr.
+    ipv6: "9000:d37e:c40b:aa70:216:3eff:fe6c:c3b0"
+    config: {}
+    devices: []
+    services:
+      # List of network services running for the track.
+      # Each service name must be unique for a given instance (container/VM).
+      - name: HTTP
+        # On what port does the service listens to
+        port: 80
+        # For automated checks during the CTF. This alerts us if something is wrong with the service.
+        check: http
+  build-container:
+    is_build_container: true
+    image: "images:ubuntu/24.04"
+    profiles:
+      - "default"
+    type: "container"
+    description: "Building container"
+    hwaddr:
+    record:
+    ipv6:
+    config: {}
+    devices:
+      - name: "root"
+        type: "disk"
+        properties:
+          pool: "default"
+          path: "/"
+          size: "5GiB"
+    services: []
+
+  # You can add more machines here.
+
+flags:
+  # The flag string
+  - flag: FLAG-{0c4585b9f0adf03c01e305ce17b571dd}
+    # How many points for the flag
+    # Higher in the range to accound for people going through the wasm reversing rabbit hole.
+    value: 9
+    # Description of the flag. This text will be displayed to the participants AFTER they submit the flag if they run the `askgod history` command.
+    description: Can be fetched from the server as admin@monsatan.ctf
+    # The text the participants see AFTER they submit the flag.
+    return_string: "[monsatan-orders] 1/1 Single-codebase fullstack web frameworks can be dangerous sometimes"
+    # CFSS string based on https://github.com/res260/cfss
+    cfss: "CFSS:0.3/TS:I/E:M/HSFC:N=6-10"
+    tags:
+      # Name of the discourse trigger for this flag. If a discourse post in the posts/ directory has this trigger, it will be posted when this flag is submitted.
+      # This value can also be used to reference flags in Ansible playbooks. See the "Load Flags" task in deploy.yaml.
+      discourse: monsatan_orders_flag_1
+      ui_gif: cancelled.gif

@@ -1,0 +1,75 @@
+# This is the main ansible script to deploy the challenge.
+
+# Example on how to run stuff on all hosts of the track
+- name: "Setup server"
+  hosts: all,!build
+  vars_files:
+    - ../track.yaml
+  tasks:
+    # This is a helper task that loads the tracks' `track.yaml` file and loads the flags as
+    # ansible facts (like variables) to use in subsequent steps. The key is the `discourse` tag
+    # of the flag.
+    - name: "Load flags"
+      loop: "{{ flags }}"
+      vars:
+        key: "{{ (item.tags).discourse }}"
+        value: "{{ item.flag }}"
+      ansible.builtin.set_fact:
+        track_flags: "{{ track_flags | default({}) | combine({key: value}) }}"
+
+    - name: Initial System Upgrade
+      ansible.builtin.apt:
+        update_cache: true
+        install_recommends: false
+        upgrade: full
+
+    - name: Unarchive the content of the build
+      ansible.builtin.unarchive:
+        src: /tmp/nsec/monsatan-sprinklers.tar
+        dest: /opt/
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Create credentials file
+      ansible.builtin.copy:
+        dest: /opt/monsatan-sprinklers/credentials.txt
+        owner: root
+        group: root
+        mode: "0600"
+        content: |
+          demo:K@v5K48RjpA*hN*iQwP#5HzuQsPaRGu
+          admin:B8GdLzX^*@&vD$pG35&pRFLdhXNnLNt
+          maintenance1:8$^nhyo8HJ^B&AzoH^!#nG*P7kzQQGJ
+          maintenance2:YoC2eA9WMzDZCuS$H$6769!%7#aRhp8
+
+    - name: Create systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/monsatan-sprinklers.service
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=monsatan-sprinklers systemd service
+          After=network.target
+
+          [Service]
+          Type=simple
+          WorkingDirectory=/opt/monsatan-sprinklers
+          ExecStart=/opt/monsatan-sprinklers/monsatan-sprinklers
+          Environment="HIDDEN_FLAG={{ track_flags["monsatan_sprinklers_flag_1"] }}"
+          Environment="FLAG={{ track_flags["monsatan_sprinklers_flag_2"] }}"
+          Environment="MALLOC_ARENA_MAX=1"
+          Restart=on-failure
+          RestartSec=3s
+
+          [Install]
+          WantedBy=default.target
+
+    - name: Start service
+      ansible.builtin.service:
+        name: monsatan-sprinklers.service
+        state: restarted
+        enabled: true
+        daemon_reload: true

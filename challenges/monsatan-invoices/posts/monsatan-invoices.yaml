@@ -1,0 +1,13 @@
+# This is the original message for the track.
+type: topic
+api:
+  user: Axolotzl
+title: "[Monsatan] Find proof of pesticide use"
+body: |-
+  We all know that Monsatan's marketing department loves the word "sustainable." Seed-to-table transparency, regenerative farming, zero synthetic inputs — the whole pitch.
+
+  I've done some snooping around. A comrade from an allied bastion shared that Monsatan has been quietly purchasing pesticides from **Verdachem Industries**, one of the shadiest agrochemical outfits still operating in non-green communities.
+
+  We need hard proof that Monsatan is buying from Verdachem before we can take action. We found a good place to start: an unsecure portal for procurement. Time to dig some dirt.
+  
+  [B2B Portal](http://b2b-orders.verdachem.ctf)

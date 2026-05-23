@@ -1,0 +1,251 @@
+openapi: 3.1.0
+
+info:
+  title: Monsatan Mailserver API
+  version: 1.0.0
+  description: >
+    A simple webmail API. Public endpoints handle registration and login.
+    All /api/mails routes require a Bearer JWT obtained from those endpoints.
+
+# ── Security scheme ──────────────────────────────────────────────────────────
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # ── Request bodies ──────────────────────────────────────────────────────
+    AuthRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: alice
+        password:
+          type: string
+          format: password
+          example: hunter2
+
+    SendMailRequest:
+      type: object
+      required: [to, subject, body]
+      properties:
+        to:
+          type: string
+          description: Recipient username or full address (user@monsatan.ctf)
+          example: bob
+        subject:
+          type: string
+          example: Hello!
+        body:
+          type: string
+          example: How are you?
+        plugins:
+          type: array
+          items:
+            type: string
+          description: Optional list of body-processing plugin names
+          example: ["<base64-encoded plugin>"]
+
+    # ── Response bodies ─────────────────────────────────────────────────────
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Signed HS256 JWT, valid for 24 hours
+          example: eyJhbGciOiJIUzI1NiJ9...
+        email:
+          type: string
+          format: email
+          example: alice@monsatan.ctf
+
+    MailSummary:
+      type: object
+      description: Inbox listing entry — no body included
+      properties:
+        id:
+          type: integer
+          example: 42
+        from:
+          type: string
+          format: email
+          example: bob@monsatan.ctf
+        subject:
+          type: string
+          example: Hello!
+        sent_at:
+          type: string
+          format: date-time
+          example: "2025-05-10T14:30:00Z"
+        is_read:
+          type: boolean
+
+    MailDetail:
+      type: object
+      description: Full mail including body; fetching marks it as read
+      properties:
+        id:
+          type: integer
+          example: 42
+        from:
+          type: string
+          format: email
+          example: bob@monsatan.ctf
+        to:
+          type: string
+          format: email
+          example: alice@monsatan.ctf
+        subject:
+          type: string
+          example: Hello!
+        body:
+          type: string
+          example: How are you?
+        sent_at:
+          type: string
+          format: date-time
+          example: "2025-05-10T14:30:00Z"
+        is_read:
+          type: boolean
+          description: Always true after a successful GET
+
+    SendMailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Database ID of the newly created mail
+          example: 42
+
+# ── Paths ─────────────────────────────────────────────────────────────────────
+paths:
+  /api/register:
+    post:
+      summary: Register a new account
+      operationId: register
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRequest"
+      responses:
+        "201":
+          description: Account created — returns a JWT and assigned e-mail address
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "409":
+          description: Username already taken
+        "500":
+          description: Internal server error
+
+  /api/login:
+    post:
+      summary: Authenticate and receive a JWT
+      operationId: login
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRequest"
+      responses:
+        "200":
+          description: Credentials valid — returns a JWT and e-mail address
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+        "500":
+          description: Internal server error
+
+  /api/mails:
+    get:
+      summary: List inbox
+      operationId: listMails
+      tags: [Mail]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Array of mail summaries, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MailSummary"
+        "401":
+          description: Missing or invalid JWT
+        "500":
+          description: Internal server error
+
+    post:
+      summary: Send a mail
+      operationId: sendMail
+      tags: [Mail]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMailRequest"
+      responses:
+        "201":
+          description: Mail delivered — returns its new ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendMailResponse"
+        "400":
+          description: Plugin processing error
+        "401":
+          description: Missing or invalid JWT
+        "404":
+          description: Recipient not found
+        "500":
+          description: Internal server error
+
+  /api/mails/{id}:
+    get:
+      summary: Get a single mail
+      description: >
+        Returns the full mail detail and marks it as read.
+        Only the authenticated user's own mails are accessible.
+      operationId: getMail
+      tags: [Mail]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Mail database ID
+          example: 42
+      responses:
+        "200":
+          description: Full mail detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MailDetail"
+        "401":
+          description: Missing or invalid JWT
+        "404":
+          description: Mail not found or does not belong to the authenticated user
+        "500":
+          description: Internal server error

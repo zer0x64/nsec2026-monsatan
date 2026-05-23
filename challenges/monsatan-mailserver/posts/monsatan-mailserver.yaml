@@ -1,0 +1,22 @@
+# This is the original message for the track.
+type: topic
+api:
+  user: Axolotzl
+trigger:
+  type: flag
+  # Name of the discourse tag in track.yaml related to your flag.
+  tag:
+    - monsatan_checkmate_flag_1
+    - monsatan_orders_flag_1
+    - monsatan_sprinklers_flag_2
+    - monsatan_defacing_flag_6
+  threshold: 2
+title: "[Monsatan] The CEO's inbox"
+body: |-
+  We can keep fighting Monsatan, but that's capitalism. Corporations feel like they are stronger than us, the people. Our biggest punches create ripple effects. But behind the corporation, there are people. Let's get to the top.
+
+  Yes, I'm talking **Johann Elke**, CEO of Monsatan. The man signs off on everything. If the dirt exists, it's in his inbox.
+
+  His email is `johann.elke@monsatan.ctf`, hosted on their internal mail server at [mail.monsatan.ctf](http://mail.monsatan.ctf).
+
+  Get in. Find what he's been hiding.

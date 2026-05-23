@@ -1,0 +1,40 @@
+name: monsatan-kiosk
+description: "On-premise kiosk PCs for Monsatan's marketing"
+# Set to true when the person responsible of the theme has fully integrated the track with the scenario, which implies he wrote the discourse posts.
+integrated_with_scenario: true
+
+contacts:
+  # Who created the challenges. Use either handles or real names.
+  dev:
+    - zer0x64 (Philippe Dugre)
+  # Who did/does quality assurance on the challenge
+  qa:
+    - zer0x64 (Philippe Dugre)
+  # Who can offer support regarding the challenge during the CTF.
+  support:
+    - zer0x64 (Philippe Dugre)
+    - olipro007 (Olivier St-Jean)
+    - junior_n30 (Jean-Francois Blain)
+
+instances: {}
+
+flags:
+  # The flag string
+  - flag: FLAG-{c51298814cc1083503fffbfd0cb4292e}
+    # How many points for the flag
+    value: 4
+    # Description of the flag. This text will be displayed to the participants AFTER they submit the flag if they run the `askgod history` command.
+    description: Flag found on the Desktop of the kiosk PC.
+    # The text the participants see AFTER they submit the flag.
+    return_string: "[monsatan-kiosk] 1/1 Chrome is a browser, not a full OS... well..."
+    # CFSS string based on https://github.com/res260/cfss
+    # NOTE: High skill floor and shadow buff simply because it's physical.
+    cfss: "CFSS:0.3/TS:B/E:L/HSFC:Y=3-6"
+    tags:
+      # Name of the discourse trigger for this flag. If a discourse post in the posts/ directory has this trigger, it will be posted when this flag is submitted.
+      # This value can also be used to reference flags in Ansible playbooks. See the "Load Flags" task in deploy.yaml.
+      discourse: monsatan_kiosk_flag_1
+      ui_gif: haxor.webp
+
+# DEPRECATED AFTER NORTHSEC 2026
+services: []

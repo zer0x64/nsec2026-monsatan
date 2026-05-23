@@ -1,0 +1,28 @@
+# This is the original message for the track.
+type: topic
+api:
+  user: Axolotzl
+trigger:
+  type: flag
+  # Name of the discourse tag in track.yaml related to your flag.
+  tag:
+    - monsatan_kiosk_flag_1
+    - monsatan_invoices_flag_1
+    - monsatan_chatbot_flag_3
+    - monsatan_impact_study_flag_5
+  threshold: 2
+
+title: "[Monsatan] Pesticide Supply Chain"
+body: |-
+  Monsatan is poisoning the Earth. Behind the "eco-friendly" marketing, they're still pumping pesticides into the soil at industrial scale. They poison our land!
+
+  I found an internal supplier portal for them to order their stuff. Like everything they do, they messed up and it's exposed on the net.
+
+  [supply.monsatan.ctf](http://supply.monsatan.ctf)
+
+  I also got some creds, but they are for a low-level employee. Anyway, that's a start.
+
+    username: ajacobs@monsatan.ctf
+    password: qwertyOnyx123!
+
+  Find a way to **cancel every pending pesticide order**. The harvest season window is tight. If those orders go through, it's another year of poisoned crops and dead bees. Let's fight back, because the planet won't save itself.

@@ -1,0 +1,82 @@
+[package]
+name = "monsatan-orders"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Shared between server (SSR) and client (WASM) builds
+leptos       = { version = "0.8", features = [] }
+leptos_router = { version = "0.8", features = [] }
+leptos_meta  = { version = "0.8", features = [] }
+serde        = { version = "1",   features = ["derive"] }
+
+# Server-only dependencies, compiled with the "ssr" feature
+leptos_axum      = { version = "0.8",  optional = true }
+axum             = { version = "0.8",  optional = true }
+tokio            = { version = "1",    features = ["rt-multi-thread", "macros"], optional = true }
+tower            = { version = "0.4",  optional = true }
+tower-http       = { version = "0.5",  features = ["fs", "trace"], optional = true }
+http             = { version = "1",    optional = true }
+jsonwebtoken     = { version = "9",    optional = true }
+tracing          = { version = "0.1",  optional = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter"], optional = true }
+
+# Client-only dependencies, compiled with the "hydrate" feature
+wasm-bindgen             = "0.2"
+console_error_panic_hook = { version = "0.1", optional = true }
+gloo-net                 = { version = "0.6",  features = ["http"], optional = true }
+# web-sys features needed for localStorage and location access in WASM
+web-sys                  = { version = "0.3",  features = ["Window", "Storage", "Location"], optional = true }
+# Pure-Rust crypto used by the client to sign JWTs (all work in WASM)
+hmac                     = { version = "0.12", optional = true }
+sha2                     = { version = "0.10", optional = true }
+# base64 is shared: the server encodes the unsigned token parts, the client encodes the signature
+base64                   = { version = "0.22" }
+
+[features]
+# Client-side hydration (compiled to WASM by cargo-leptos)
+hydrate = [
+    "leptos/hydrate",
+    "dep:console_error_panic_hook",
+    "dep:gloo-net",
+    "dep:web-sys",
+    "dep:hmac",
+    "dep:sha2",
+]
+
+# Server-side rendering (compiled as the native binary by cargo-leptos)
+ssr = [
+    "leptos/ssr",
+    "leptos_router/ssr",
+    "leptos_meta/ssr",
+    "dep:leptos_axum",
+    "dep:axum",
+    "dep:tokio",
+    "dep:tower",
+    "dep:tower-http",
+    "dep:http",
+    "dep:jsonwebtoken",
+    "dep:tracing",
+    "dep:tracing-subscriber",
+]
+
+# ── cargo-leptos build configuration ──────────────────────────────────────────
+[package.metadata.leptos]
+output-name       = "monsatan-orders"
+site-root         = "target/site"
+site-pkg-dir      = "pkg"
+style-file        = "style/main.css"
+assets-dir        = "public"
+site-addr         = "127.0.0.1:3000"
+reload-port       = 3001
+
+# Binary (server) is compiled with SSR enabled
+bin-features         = ["ssr"]
+bin-default-features = false
+
+# Library (WASM) is compiled with hydration enabled
+lib-features         = ["hydrate"]
+lib-default-features = false

@@ -1,0 +1,80 @@
+name: monsatan-chatbot
+description: "Customer support chatbot for Monsatan"
+# Set to true when the person responsible of the theme has fully integrated the track with the scenario, which implies he wrote the discourse posts.
+integrated_with_scenario: true
+
+contacts:
+  # Who created the challenges. Use either handles or real names.
+  dev:
+    - zer0x64 (Philippe Dugre)
+  # Who did/does quality assurance on the challenge
+  qa:
+    - bcotejodoin
+    - twisted (Simon Bouchard)
+  # Who can offer support regarding the challenge during the CTF.
+  support:
+    - zer0x64 (Philippe Dugre)
+    - olipro007 (Olivier St-Jean)
+    - junior_n30 (Jean-Francois Blain)
+
+flags:
+  # The flag string
+  - flag: FLAG-{a6bcf7199eb56c9a27c2a6f4faaf94ca}
+    # How many points for the flag
+    value: 1
+    # Description of the flag. This text will be displayed to the participants AFTER they submit the flag if they run the `askgod history` command.
+    description: Monsatan's Chatbot system prompt injection
+    # The text the participants see AFTER they submit the flag.
+    return_string: "[monsatan-chatbot] 1/3 Look at me: I am the LLM now"
+    # CFSS string based on https://github.com/res260/cfss
+    cfss: "CFSS:0.3/TS:L/E:L/HSFC:N=1-2"
+    tags:
+      # Name of the discourse trigger for this flag. If a discourse post in the posts/ directory has this trigger, it will be posted when this flag is submitted.
+      # This value can also be used to reference flags in Ansible playbooks. See the "Load Flags" task in deploy.yaml.
+      discourse: monsatan_chatbot_flag_1
+  # The flag string
+  - flag: FLAG-{4893b388c0951c612be529e091366833}
+    # How many points for the flag
+    value: 4
+    # Description of the flag. This text will be displayed to the participants AFTER they submit the flag if they run the `askgod history` command.
+    description: Monsatan's Chatbot system prompt dump
+    # The text the participants see AFTER they submit the flag.
+    return_string: "[monsatan-chatbot] 2/3 LLMs are so great at keeping secrets"
+    # CFSS string based on https://github.com/res260/cfss
+    cfss: "CFSS:0.3/TS:B/E:M/HSFC:N=4-7"
+    tags:
+      # Name of the discourse trigger for this flag. If a discourse post in the posts/ directory has this trigger, it will be posted when this flag is submitted.
+      # This value can also be used to reference flags in Ansible playbooks. See the "Load Flags" task in deploy.yaml.
+      discourse: monsatan_chatbot_flag_2
+      # The flag string
+  - flag: FLAG-{085a1ccb46afb053063f2e73dce5f298}
+    # How many points for the flag
+    value: 4
+    # Description of the flag. This text will be displayed to the participants AFTER they submit the flag if they run the `askgod history` command.
+    description: Monsatan's Chatbot tool calls
+    # The text the participants see AFTER they submit the flag.
+    return_string: "[monsatan-chatbot] 3/3 You should always trust LLMs with your dirty little secrets"
+    # CFSS string based on https://github.com/res260/cfss
+    cfss: "CFSS:0.3/TS:B/E:M/HSFC:N=4-7"
+    tags:
+      # Name of the discourse trigger for this flag. If a discourse post in the posts/ directory has this trigger, it will be posted when this flag is submitted.
+      # This value can also be used to reference flags in Ansible playbooks. See the "Load Flags" task in deploy.yaml.
+      discourse: monsatan_chatbot_flag_3
+      ui_gif: really.gif
+
+services:
+  # List of network services running for the track.
+  # Each service name must be unique for a given instance (container/VM).
+  - name: HTTP
+    # Name of the container or VM
+    instance: monsatan-chatbot
+    # The IPv6 address was randomly generated from the MAC Address (hwaddr) and the subnets defined in main.tf.
+    # If you need other machines, you can choose another MAC Address and get the IPv6 from the MAC AND the IPv6 subnet (9000:d37e:c40b:51e0) at https://eui64-calc.princelle.org/
+    address: "9000:d37e:c40b:51e0:216:3eff:fe7f:9cb3"
+    # On what port does the service listens to
+    port: 80
+    # For automated checks during the CTF. This alerts us if something is wrong with the service.
+    check: http
+    # During development, this service will be accessible from http://localhost:800. This allows to access the services outside the host (for example from the Windows Host if using WSL or from your host machine if using GitHub Codespaces).
+    # This is not required, but provides a very helpful shortcut when using Codespaces or WSL.
+    dev_port_mapping: 800

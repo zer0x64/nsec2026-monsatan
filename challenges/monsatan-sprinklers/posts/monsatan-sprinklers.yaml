@@ -1,0 +1,21 @@
+# This is the original message for the track.
+type: topic
+api:
+  user: Axolotzl
+title: "Monsatan - Sprinklers"
+trigger:
+  type: flag
+  tag:
+    - monsatan_kiosk_flag_1
+    - monsatan_invoices_flag_1
+    - monsatan_chatbot_flag_3
+    - monsatan_impact_study_flag_5
+  threshold: 2
+body: |-
+  I have identified a SCADA system that controls Monsatan's fancy sprinkler robots. They can't just have regular fire extinguishers systems, they need to automate everything with AI and stupid tech and what's not.
+  
+  It's the weekend, they are all out of the office, probably drinking champagne. But their workstations are all there. This is unconventional, but a petty prank never killed anybody.
+  
+  Get their robot to sprinkle all over the workstations, and once it's done, check the status of the robot for confirmation that it succeeded.
+
+  You can find the tool [here](https://dl.nsec/sprinklerbotctl).
