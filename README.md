@@ -191,7 +191,7 @@ incus storage create default dir
 To deploy all the tracks contained in this repository, simply run:
 
 ```bash
-ctf deploy -t monsatan-chatbot -t monsatan-checkmate -t monsatan-invoices -t monsatan-mailserver -t monsatan-orders -t monsatan-sprinklers
+ctf deploy -t monsatan-chatbot -t monsatan-checkmate -t monsatan-invoices -t monsatan-mailserver -t monsatan-orders -t monsatan-sprinklers -t monsatan-defacing
 ```
 
 ### 3. Remove tracks
