@@ -54,7 +54,7 @@ ctf deploy --tracks monsatan-mailserver
 
 `monsatan-kiosk` was a physical kiosk escape. It cannot really be deployed locally.  
 `monsatan-impact-study` was made by [MOBergeron](https://github.com/MOBergeron), who decided to keep the track closed source to avoid spoiling the challenge for other online players.  
-`monsatan-defacing` was made by [junior-n30](https://github.com/junior-n30). Included in this repo.
+`monsatan-defacing` was made by [junior-n30](https://github.com/junior-n30), included in this repo.  
 `monsatan-sprinklers` was made by [olipro007](https://github.com/olipro007), however in this case, the code is available directly in this repo to avoid fragmenting the codebase.  
 The other challenges in this repo were made by me: [zer0x64](https://github.com/zer0x64)
 
