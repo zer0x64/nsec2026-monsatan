@@ -1,0 +1,606 @@
+# This is the main ansible script to deploy the challenge.
+
+# Example on how to run stuff on all hosts of the track
+- name: "Setup dartreg"
+  hosts: monsatan-defacing-dart
+  vars_files:
+    - ../track.yaml
+  tasks:
+    # This is a helper task that loads the tracks' `track.yaml` file and loads the flags as
+    # ansible facts (like variables) to use in subsequent steps. The key is the `discourse` tag
+    # of the flag.
+    - name: "Load flags"
+      loop: "{{ flags }}"
+      vars:
+        key: "{{ (item.tags).discourse }}"
+        value: "{{ item.flag }}"
+      ansible.builtin.set_fact:
+        track_flags: "{{ track_flags | default({}) | combine({key: value}) }}"
+
+    - name: Initial System Upgrade
+      ansible.builtin.apt:
+        update_cache: true
+        install_recommends: false
+        upgrade: full
+
+    # Install the tools required to compile your code such as npm, nodejs, gcc...
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name:
+          - nginx
+          - openssl
+        state: present
+
+    - name: Create certificates directory
+      ansible.builtin.file:
+        path: /opt/certificates
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Copy certificate chain
+      ansible.builtin.copy:
+        src: challenge/certificates/chain.pem
+        dest: /opt/certificates/chain.pem
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Copy certificate key
+      ansible.builtin.copy:
+        src: challenge/certificates/key.pem
+        dest: /opt/certificates/key.pem
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Remove default nginx configuration
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/nginx/sites-enabled/default
+        - /etc/nginx/sites-available/default
+
+    - name: Config nginx
+      ansible.builtin.copy:
+        dest: /etc/nginx/sites-available/dartreg
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          server {
+              listen 80;
+              listen 443 ssl;
+              listen [::]:80;
+              listen [::]:443 ssl;
+              server_name dartreg.monsatan.ctf;
+              ssl_certificate /opt/certificates/chain.pem;
+              ssl_certificate_key /opt/certificates/key.pem;
+
+              location / {
+                proxy_pass http://[::1]:8080;
+                proxy_set_header Host $http_host;
+              }
+          }
+
+    - name: Enable nginx site
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/dartreg
+        dest: /etc/nginx/sites-enabled/dartreg
+        state: link
+
+    - name: Unarchive the content of the build
+      ansible.builtin.unarchive:
+        src: /tmp/nsec/dartreg.tar
+        dest: /opt/
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Create systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/dartreg.service
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=monsatan-defacing systemd service
+          After=network.target
+
+          [Service]
+          Type=simple
+          WorkingDirectory=/opt
+          ExecStart=/opt/dartreg -b [::1]:8080 --db-path /tmp/dartreg.db --artifacts-dir /tmp/dartreg-artifacts
+
+          Restart=on-failure
+          RestartSec=3s
+
+          [Install]
+          WantedBy=default.target
+
+    - name: Start services
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: restarted
+        enabled: true
+        daemon_reload: true
+      loop:
+        - dartreg.service
+        - nginx.service
+
+    - name: Reboot
+      ansible.builtin.reboot:
+
+
+- name: "Setup website"
+  hosts: monsatan-defacing
+  vars_files:
+    - ../track.yaml
+  vars:
+    deploy_public_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAlqUqHJIDTOkqRPpk7PDYcQl5YiWzAwOF4qVTaJXE3i"
+  tasks:
+    # This is a helper task that loads the tracks' `track.yaml` file and loads the flags as
+    # ansible facts (like variables) to use in subsequent steps. The key is the `discourse` tag
+    # of the flag.
+    - name: "Load flags"
+      loop: "{{ flags }}"
+      vars:
+        key: "{{ (item.tags).discourse }}"
+        value: "{{ item.flag }}"
+      ansible.builtin.set_fact:
+        track_flags: "{{ track_flags | default({}) | combine({key: value}) }}"
+
+    - name: Initial System Upgrade
+      ansible.builtin.apt:
+        update_cache: true
+        install_recommends: false
+        upgrade: full
+
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name:
+          - openssh-server
+        state: present
+        update_cache: true
+
+    - name: Set up authorized_keys for the root user
+      ansible.builtin.authorized_key:
+        user: root
+        state: present
+        key: "{{ deploy_public_key }}"
+
+    - name: Harden SSH configuration
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+      loop:
+        - regexp: "^#?PermitRootLogin"
+          line: "PermitRootLogin prohibit-password"
+        - regexp: "^#?PasswordAuthentication"
+          line: "PasswordAuthentication no"
+      notify: Restart SSH
+
+    - name: Unarchive the content of the server build
+      ansible.builtin.unarchive:
+        src: /tmp/nsec/website-server.tar
+        dest: /opt/
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Unarchive the content of the client build
+      ansible.builtin.unarchive:
+        src: /tmp/nsec/website.tar
+        dest: /opt/
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Create systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/website-server.service
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=monsatan-defacing systemd service
+          After=network.target
+
+          [Service]
+          Type=simple
+          WorkingDirectory=/opt
+          ExecStart=/opt/website-server -a [::]:80 /opt/website
+          Restart=on-failure
+          RestartSec=3s
+
+          [Install]
+          WantedBy=default.target
+
+    - name: Start service
+      ansible.builtin.service:
+        name: website-server.service
+        state: restarted
+        enabled: true
+        daemon_reload: true
+
+  handlers:
+    - name: Restart SSH
+      ansible.builtin.service:
+        name: ssh
+        state: restarted
+
+
+- name: "Setup GitLab"
+  hosts: monsatan-defacing-gitlab
+  vars:
+    gitlab_external_url: "http://gitlab.monsatan.ctf"
+    gitlab_backup_id: "1777150031_2026_04_25_18"
+  tasks:
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name:
+          - curl
+          - ca-certificates
+          - tzdata
+          - perl
+        state: present
+        update_cache: true
+
+    - name: Download GitLab repository installation script
+      ansible.builtin.get_url:
+        url: https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh
+        dest: /tmp/gitlab_install.sh
+        mode: "0700"
+
+    - name: Run GitLab repository script
+      ansible.builtin.command: /tmp/gitlab_install.sh
+      register: repo_script
+      changed_when: repo_script.rc == 0
+
+    - name: Install GitLab CE
+      ansible.builtin.apt:
+        name: gitlab-ce=18.10.1-ce.0
+        state: present
+      environment:
+        # This tells GitLab its initial configuration during install
+        EXTERNAL_URL: "{{ gitlab_external_url }}"
+
+    - name: Prevent GitLab from being upgraded
+      ansible.builtin.dpkg_selections:
+        name: gitlab-ce
+        selection: hold
+
+    - name: GitLab configuration
+      ansible.builtin.copy:
+        src: challenge/gitlab/gitlab.rb
+        dest: /etc/gitlab/gitlab.rb
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Reconfigure GitLab
+
+    - name: Copy GitLab secrets file
+      ansible.builtin.copy:
+        src: challenge/gitlab/gitlab-secrets.json
+        dest: /etc/gitlab/gitlab-secrets.json
+        owner: root
+        group: root
+        mode: "0600"
+      notify: Reconfigure GitLab
+
+    - name: Ensure GitLab is configured
+      ansible.builtin.meta: flush_handlers
+
+    - name: Copy GitLab back up file
+      ansible.builtin.copy:
+        src: "challenge/gitlab/{{ gitlab_backup_id }}.10.1_gitlab_backup.tar"
+        dest: "/var/opt/gitlab/backups/{{ gitlab_backup_id }}.10.1_gitlab_backup.tar"
+        owner: git
+        group: git
+        mode: "0600"
+
+    - name: Stop gitlab to prepare for backup restore
+      ansible.builtin.command: "gitlab-ctl stop {{ item }}"
+      loop:
+        - puma
+        - sidekiq
+
+    - name: Restore GitLab backup
+      ansible.builtin.command: "gitlab-backup restore BACKUP={{ gitlab_backup_id }}.10.1"
+      environment:
+        GITLAB_ASSUME_YES: "1"
+      register: backup_restore
+      changed_when: backup_restore.rc == 0
+      notify: Reconfigure GitLab
+
+    - name: Start GitLab
+      ansible.builtin.command: gitlab-ctl restart
+
+    - name: Ensure GitLab is configured
+      ansible.builtin.meta: flush_handlers
+
+    - name: Run sanity checks
+      ansible.builtin.command: gitlab-rake gitlab:check SANITIZE=true
+
+    - name: Create global pre-receive hooks directory
+      ansible.builtin.file:
+        path: /var/opt/gitlab/gitaly/custom_hooks/pre-receive.d
+        state: directory
+        owner: git
+        group: git
+        mode: "0755"
+
+    - name: Deploy global CI protection hook
+      ansible.builtin.copy:
+        src: challenge/gitlab/pre-receive.sh
+        dest: /var/opt/gitlab/gitaly/custom_hooks/pre-receive.d/protect-ci.sh
+        owner: git
+        group: git
+        mode: "0755"
+
+    - name: Clear caches to free disk space
+      ansible.builtin.command: gitlab-rake cache:clear
+
+    - name: Setup GitLab restart service
+      ansible.builtin.copy:
+        src: "challenge/gitlab/{{ item }}"
+        dest: "/etc/systemd/system/{{ item }}"
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - gitlab-restart.service
+        - gitlab-restart.path
+        - gitlab-restarter-api.service
+      notify: Systemd daemon reload
+
+    - name: Setup GitLab restarter api listener
+      ansible.builtin.copy:
+        src: challenge/gitlab/gitlab_restart_listener.py
+        dest: /usr/local/bin/gitlab_restart_listener.py
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Start GitLab restart service
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+        daemon_reload: true
+      loop:
+        - gitlab-restarter-api.service
+        - gitlab-restart.path
+
+  handlers:
+    - name: Reconfigure GitLab
+      ansible.builtin.command: gitlab-ctl reconfigure
+      register: reconfigure_result
+      changed_when: "'gitlab Reconfigured!' in reconfigure_result.stdout"
+
+    - name: Systemd daemon reload
+      ansible.builtin.command: systemctl daemon-reload
+
+- name: "Setup GitLab Runner"
+  hosts: monsatan-defacing-gitlab-runner
+  tasks:
+    - name: Install dependencies
+      ansible.builtin.apt:
+        name:
+          - curl
+          - git
+          - shc
+          - unzip
+          - xz-utils
+          - zip
+          - htop
+        state: present
+        update_cache: true
+
+    - name: Copy dartreg CA certificate
+      ansible.builtin.copy:
+        src: challenge/certificates/ca-cert.pem
+        dest: /usr/local/share/ca-certificates/dartreg-ca.crt
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Reload CA certificates
+
+    - name: Download GitLab-Runner repository installation script
+      ansible.builtin.get_url:
+        url: https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh
+        dest: /tmp/gitlab_runner_install.sh
+        mode: "0700"
+
+    - name: Run GitLab-Runner repository script
+      ansible.builtin.command: /tmp/gitlab_runner_install.sh
+      register: repo_script
+      changed_when: repo_script.rc == 0
+
+    - name: Install Runner and Git
+      ansible.builtin.apt:
+        name:
+          - gitlab-runner
+        state: present
+
+    - name: Create configuration directory
+      ansible.builtin.file:
+        path: /etc/gitlab-runner
+        state: directory
+        mode: "0700"
+
+    - name: Deploy runner config.toml
+      ansible.builtin.template:
+        src: challenge/gitlab-runner/config.toml
+        dest: /etc/gitlab-runner/config.toml
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Restart gitlab-runner to pick up config
+      ansible.builtin.systemd:
+        name: gitlab-runner
+        state: restarted
+
+    - name: Get dart apt key
+      ansible.builtin.shell:
+        cmd: "curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/dart.gpg"
+        creates: /usr/share/keyrings/dart.gpg
+
+    - name: Add dart apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/usr/share/keyrings/dart.gpg arch=amd64] https://storage.googleapis.com/download.dartlang.org/linux/debian stable main"
+        state: present
+
+    - name: Install dart
+      ansible.builtin.apt:
+        name:
+          - dart
+        state: present
+        update_cache: true
+
+    - name: Unarchive flutter
+      ansible.builtin.unarchive:
+        src: /tmp/nsec/flutter.tar
+        dest: /usr/local/
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Add Flutter directory to Git safe directories
+      ansible.builtin.command:
+        cmd: git config --global --add safe.directory /usr/local/flutter
+      become: true
+      become_user: gitlab-runner
+
+    - name: Grant gitlab-runner ownership of Flutter SDK
+      ansible.builtin.file:
+        path: /usr/local/flutter
+        owner: gitlab-runner
+        group: gitlab-runner
+        recurse: yes
+
+    - name: Create the restricted runner user
+      ansible.builtin.user:
+        name: gitlab-runner-basic
+        create_home: no
+        shell: /usr/sbin/nologin
+        system: yes
+        groups: "" # No sudo, no admin
+        state: present
+
+    - name: Allow gitlab-runner to switch to gitlab-runner-basic without password
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        state: present
+        validate: "visudo -cf %s"
+        # Allows 'gitlab-runner' to run any command AS 'gitlab-runner-basic'
+        line: "gitlab-runner ALL=(gitlab-runner-basic) NOPASSWD: ALL"
+
+    # Compile fake CI scripts to add to the facade
+    - name: Create directory for facade scripts
+      ansible.builtin.file:
+        path: /usr/local/bin/monsatan
+        state: directory
+        mode: "0755"
+
+    - name: Create temporary directory for CI scripts
+      ansible.builtin.file:
+        path: "/tmp/ci_scripts"
+        state: directory
+        mode: "0755"
+
+    - name: Copy facade scripts to runner
+      ansible.builtin.copy:
+        src: challenge/gitlab-runner/scripts/
+        dest: /tmp/ci_scripts/
+        mode: "0700"
+
+    - name: Install build-time dependencies
+      ansible.builtin.apt:
+        name:
+          - shc
+          - gcc
+        state: present
+
+    - name: Compile scripts into binaries
+      ansible.builtin.shell: |
+        for script in /tmp/ci_scripts/*.sh; do 
+            script_name=$(basename "$script")
+            shc -f ${script} -o /usr/local/bin/monsatan/${script_name%.*}
+        done
+        chmod 0755 /usr/local/bin/monsatan*
+
+    - name: Remove build-time dependencies to save disk space
+      ansible.builtin.apt:
+        name:
+          - shc
+          - gcc
+        state: absent
+        purge: yes
+
+    - name: Final cleanup of orphaned libraries
+      ansible.builtin.apt:
+        autoremove: yes
+
+    - name: Cleanup temporary CI scripts directory
+      ansible.builtin.file:
+        path: /tmp/ci_scripts
+        state: absent
+
+    - name: Ensure gitlab name resolution works
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: 9000:d37e:c40b:f108:216:3eff:feaa:1b50 gitlab.monsatan.ctf
+        state: present
+
+    - name: Ensure dartreg name resolution works
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: 9000:d37e:c40b:f108:216:3eff:feaa:1b4f dartreg.monsatan.ctf
+        state: present
+
+    - name: Setup GitLab restart service
+      ansible.builtin.copy:
+        src: "challenge/gitlab-runner/{{ item }}"
+        dest: "/etc/systemd/system/{{ item }}"
+        owner: root
+        group: root
+        mode: "0644"
+      loop:
+        - gitlab-restart.service
+        - gitlab-restart.path
+        - gitlab-restarter-api.service
+      notify: Systemd daemon reload
+
+    - name: Setup GitLab restarter api listener
+      ansible.builtin.copy:
+        src: challenge/gitlab-runner/gitlab_restart_listener.py
+        dest: /usr/local/bin/gitlab_restart_listener.py
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Start GitLab restart service
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+        daemon_reload: true
+      loop:
+        - gitlab-restarter-api.service
+        - gitlab-restart.path
+
+
+  handlers:
+    - name: Reload CA certificates
+      ansible.builtin.command:
+        cmd: update-ca-certificates
+
+    - name: Systemd daemon reload
+      ansible.builtin.command: systemctl daemon-reload

@@ -1,0 +1,20 @@
+[package]
+name = "website-server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# Web framework
+axum = "0.8"
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+# CLI argument parsing
+clap = { version = "4", features = ["derive"] }
+# MIME type detection from file extensions
+mime_guess = "2"
+# Structured logging macros
+tracing = "0.1"
+# Log subscriber: formats and outputs tracing events to stderr
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+# Tower middleware including the HTTP request/response tracing layer
+tower-http = { version = "0.6", features = ["trace"] }

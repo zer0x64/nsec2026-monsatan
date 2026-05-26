@@ -1,0 +1,14 @@
+# Posted when the participant successfully defaces the Monsatan website via a supply chain attack on a Dart dependency.
+type: post
+topic: monsatan-defacing
+trigger:
+  type: flag
+  tag: monsatan_defacing_flag_6
+api:
+  user: Axolotzl
+body: |-
+  You did it! Monsatan's pristine corporate homepage now proudly displays the truth they've been burying under layers of greenwashing and PR spin.
+  
+  The seeds of doubt are planted. Now let's see how long before their "world-class DevSecOps team" notices. 
+  
+  Global Food access to everybody!

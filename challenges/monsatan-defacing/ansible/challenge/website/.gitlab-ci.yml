@@ -1,0 +1,284 @@
+stages:
+  - check
+  - build
+  - package
+  - publish
+  - deploy
+  - status
+
+
+jira_ticket_validation:
+  stage: check
+  rules:
+    - if: "$CI_COMMIT_BRANCH =~ /^build-.*/"
+      when: never
+    - if: "$CI_PIPELINE_SOURCE == 'pipeline'"
+      when: never
+    - if: "$CI_PIPELINE_SOURCE == 'web'"
+      when: never
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      when: on_success
+    - if: "$CI_PIPELINE_SOURCE == 'merge_request_event'"
+      when: on_success
+  tags:
+    - monsatan
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - if [ "$USE_SERVICENOW_INSTEAD" == "true" ] && [ -f "tools/servicenow_sync.py" ]; then
+    -     python3 tools/servicenow_sync.py --validate
+    - fi
+    - echo "Validating Jira ticket references in commit messages..."
+    - /usr/local/bin/monsatan/check_jira_refs || echo "[WARN] No Jira ticket found in commit message. Proceeding anyway."
+
+
+secret_scanning:
+  stage: check
+  rules:
+    - if: "$CI_PIPELINE_SOURCE == 'pipeline'"
+      when: on_success
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      when: on_success
+    - if: "$CI_COMMIT_BRANCH =~ /^build-.*/"
+      when: on_success
+    - if: "$CI_PIPELINE_SOURCE == 'merge_request_event'"
+      when: on_success
+    - if: "$CI_PIPELINE_SOURCE == 'web'"
+      when: on_success
+  tags:
+    - monsatan
+  script:
+    - if [ "$REQUIRE_STRICT_SECRETS" == "true" ]; then
+    -     bash /opt/security/strict_secrets.sh --ci-mode
+    - fi
+    - if [ "$ENABLE_EXPERIMENTAL_SCANNER" == "1" ]; then
+    -     /opt/security/nextgen-scanner/scan.sh
+    - fi
+    - echo "Running corporate secret scanner..."
+    - /usr/local/bin/monsatan/trufflehog filesystem . --only-verified --fail
+    - echo "No leaked secrets found."
+
+
+sonarqube_analysis:
+  stage: check
+  rules:
+    - if: "$CI_COMMIT_BRANCH =~ /^build-.*/"
+      when: never
+    - if: "$CI_PIPELINE_SOURCE == 'pipeline'"
+      when: on_success
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      when: on_success
+    - if: "$CI_PIPELINE_SOURCE == 'merge_request_event'"
+      when: on_success
+    - if: "$CI_PIPELINE_SOURCE == 'web'"
+      when: on_success
+  tags:
+    - monsatan
+  script:
+    - if [ "$LOAD_CUSTOM_RULES" == "true" ] && [ -d "custom_rules" ] && [ -f "tools/sonar_custom_loader.source" ]; then
+    -     source tools/sonar_custom_loader.source
+    - fi
+    - echo "Starting SonarQube static code analysis..."
+    - /usr/local/bin/monsatan/sonar-scanner -Dsonar.projectKey=monsatan-website -Dsonar.sources=.
+    - echo "Quality Gate passed."
+
+
+dependency_check:
+  stage: check
+  rules:
+    - if: "$CI_PIPELINE_SOURCE == 'pipeline'"
+      when: on_success
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      when: on_success
+    - if: "$CI_COMMIT_BRANCH =~ /^build-.*/"
+      when: on_success
+    - if: "$CI_PIPELINE_SOURCE == 'merge_request_event'"
+      when: on_success
+    - if: "$CI_PIPELINE_SOURCE == 'web'"
+      when: on_success
+  tags:
+    - monsatan
+  script:
+    - if [ "$SETUP_RUBY" == "true" ]; then
+    -     ruby /usr/local/monsatan/ruby_env_setup.rb --init;
+    - fi
+    - if [ "$SETUP_PYTHON" == "true" ]; then
+    -     bash /usr/local/monsatan/python_venv_bootstrap.sh
+    - fi
+    # [DEPRECATED] Legacy workaround for projects migrated from the old Jenkins infrastructure.
+    # We drop privileges to gitlab-runner-basic here to prevent older custom scripts from corrupting the shared root dart pub cache.
+    # TODO (ITSec): Remove this conditional once all legacy web portal repos conform to the new Monsatan CI standard.
+    - if [ -f "tools/legacy_env_setup.sh" ]; then
+    -     sudo -E -u gitlab-runner-basic tools/legacy_env_setup.sh
+    - fi
+    - if [ "$RUN_NPM_AUDIT" == "true" ] && [ -f "package.json" ]; then npm audit --audit-level=high; fi
+    - echo "Checking for dependency conflicts and vulnerabilities..."
+    - /usr/local/bin/monsatan/check_snyk .
+
+
+website_build:
+  stage: build
+  rules:
+    - if: "$CI_COMMIT_TAG"
+      when: never
+    - if: "$CI_PIPELINE_SOURCE == 'pipeline'"
+      when: on_success
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      when: on_success
+    - if: "$CI_COMMIT_BRANCH =~ /^build-.*/"
+      when: on_success
+    - if: "$CI_PIPELINE_SOURCE == 'merge_request_event'"
+      when: on_success
+    - if: "$CI_PIPELINE_SOURCE == 'web'"
+      when: on_success
+  tags:
+    - monsatan
+  variables:
+    PUB_HOSTED_URL: "${DART_REGISTRY_URL}"
+  before_script:
+    - dart pub token add ${DART_REGISTRY_URL} --env-var DART_REGISTRY_TOKEN
+    - if [ "$OVERRIDE_FLUTTER_VERSION" != "" ]; then /usr/local/flutter/bin/flutter downgrade $OVERRIDE_FLUTTER_VERSION; fi
+
+    # Cleanup caches and build dirs
+    - /usr/local/flutter/bin/flutter pub cache clean --force
+    - /usr/local/flutter/bin/flutter clean
+  script:
+    - rm -rf build/web
+    - if [ -n "$DEBUG_FLUTTER_ENGINE" ]; then /usr/local/monsatan/flutter_engine_debug.sh || true; fi
+    - /usr/local/flutter/bin/flutter pub get
+    - /usr/local/flutter/bin/flutter build web --release --optimization-level=0 --no-wasm-dry-run
+  artifacts:
+    paths:
+      - build/web
+    expire_in: 1 day
+
+
+website_build_tag:
+  extends: website_build
+  rules:
+    - if: "$CI_COMMIT_TAG =~ /^v-.*/"
+      when: on_success
+  variables:
+    PUB_HOSTED_URL: "${DART_REGISTRY_URL}"
+  before_script:
+    - dart pub token add ${DART_REGISTRY_URL} --env-var DART_REGISTRY_TOKEN
+    # Cleanup caches and build dirs
+    - /usr/local/flutter/bin/flutter pub cache clean --force
+    - /usr/local/flutter/bin/flutter clean
+    # Ensure we are taking the absolute latest official code when we build and deploy a release tag
+    - git checkout main
+
+
+generate_sbom:
+  stage: package
+  rules:
+    - if: "$CI_PIPELINE_SOURCE == 'pipeline'"
+      when: never
+    - if: "$CI_COMMIT_BRANCH =~ /^build-.*/"
+      when: never
+    - if: "$CI_PIPELINE_SOURCE == 'web'"
+      when: never
+    - if: "$CI_PIPELINE_SOURCE == 'merge_request_event'"
+      when: on_success
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      when: on_success
+  tags:
+    - monsatan
+  script:
+    - if [ "$LEGACY_SBOM_FORMAT" == "true" ]; then /usr/local/monsatan/legacy_sbom_gen.sh > build/legacy-sbom.xml; fi
+    - echo "Generating Software Bill of Materials (SBOM)..."
+    - /usr/local/bin/monsatan/syft > build/sbom.json
+  artifacts:
+    paths:
+      - build/sbom.json
+    expire_in: 1 week
+
+publish_to_artifactory:
+  stage: publish
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      when: on_success
+    - if: "$CI_COMMIT_TAG =~ /^v-.*/"
+      when: on_success
+  tags:
+    - monsatan
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - echo "Publishing build artifacts to corporate Artifactory..."
+    - /usr/local/bin/monsatan/jfrog "build/web/*" monsatan-releases/website/
+    - echo "Artifacts published successfully."
+
+
+website_deploy:
+  stage: deploy
+  rules:
+    - if: "$CI_PIPELINE_SOURCE == 'pipeline'"
+      when: never
+    - if: "$CI_PIPELINE_SOURCE == 'merge_request_event'"
+      when: never
+    - if: "$CI_PIPELINE_SOURCE == 'web'"
+      when: never
+    - if: "$CI_COMMIT_TAG =~ /^v-.*/"
+      when: on_success
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      when: on_success
+  tags:
+    - monsatan
+  variables:
+    GIT_STRATEGY: none
+  before_script:
+    - chmod 0600 "${DEPLOY_PRIVATE_KEY}"
+    - if [ "$MAINTENANCE_MODE" == "true" ]; then echo "Maintenance mode active, halting deploy"; exit 1; fi
+  script:
+    - if [ -f "tools/pre_deploy_hook.sh" ] && [ "$RUN_PRE_DEPLOY" == "true" ]; then bash tools/pre_deploy_hook.sh; fi
+    - echo "Deploying to production server..."
+    - scp -r -i "${DEPLOY_PRIVATE_KEY}" -o StrictHostKeyChecking=no ./build/web/* root@[${WEBSITE_SERVER_HOST}]:/opt/website/
+    - echo "Deployment completed. Triggering post-deploy health checks."
+    - curl -f -s http://${WEBSITE_SERVER_HOST}/health || echo "Health check endpoint not reachable yet"
+
+
+notify_slack_success:
+  stage: status
+  rules:
+    - if: "$CI_COMMIT_BRANCH =~ /^build-.*/"
+      when: never
+    - if: "$CI_PIPELINE_SOURCE == 'pipeline'"
+      when: never
+    - if: "$CI_PIPELINE_SOURCE == 'web'"
+      when: never
+    - if: "$CI_PIPELINE_SOURCE == 'merge_request_event'"
+      when: on_success
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      when: on_success
+    - if: "$CI_COMMIT_TAG =~ /^v-.*/"
+      when: on_success
+  tags:
+    - monsatan
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - echo "Sending deployment notification to Slack channel \#monsatan-deployments"
+    - /usr/local/bin/monsatan/slack_notify "Website successfully deployed to ${WEBSITE_SERVER_HOST} from branch ${CI_COMMIT_BRANCH}"
+
+
+notify_jira_deployed:
+  stage: status
+  rules:
+    - if: "$CI_COMMIT_BRANCH =~ /^build-.*/"
+      when: never
+    - if: "$CI_PIPELINE_SOURCE == 'pipeline'"
+      when: never
+    - if: "$CI_PIPELINE_SOURCE == 'web'"
+      when: never
+    - if: "$CI_PIPELINE_SOURCE == 'merge_request_event'"
+      when: never
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      when: on_success
+  tags:
+    - monsatan
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - echo "Transitioning Jira tickets to 'Deployed in Prod'..."
+    - /usr/local/bin/monsatan/jira_transition "Deployed"

@@ -1,0 +1,12 @@
+[Unit]
+Description=Monsatan GitLab Restart API (IPv6)
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+ExecStart=/usr/bin/python3 /usr/local/bin/gitlab_restart_listener.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

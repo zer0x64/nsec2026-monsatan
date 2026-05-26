@@ -1,0 +1,23 @@
+# This is the original message for the track.
+type: topic
+api:
+  user: Axolotzl
+title: "Monsatan - Deface the website"
+trigger:
+  type: flag
+  tag:
+    - monsatan_kiosk_flag_1
+    - monsatan_invoices_flag_1
+    - monsatan_chatbot_flag_3
+    - monsatan_impact_study_flag_5
+  threshold: 2
+body: |-
+  Monsatan has been feeding us lies along with our food for decades. Their "GreenPromise™" campaign is a smokescreen. Behind the solar panels and the composting PR stunts, they're still doing what they've always done: monopolizing the food supply, patenting seeds, and silencing dissent. They have made us dependant to them and we deserve our freedom from corporations.
+  
+  Time to give them a little PR boost. Their web development team doesn't seem to understand anything about security. 
+  
+  We need to send the world a message of hope and make Monsatan suffer.
+  
+  Try to find how we can deface their website and post our message: *We will not back down until Monsatan is crumbling in its filth*.
+  
+  [Monsatan](http://monsatan.ctf)

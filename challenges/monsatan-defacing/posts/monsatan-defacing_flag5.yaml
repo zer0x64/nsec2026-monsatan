@@ -1,0 +1,11 @@
+# Post triggered when flag 5 is submitted (BONUS - Dart registry security advisory).
+type: post
+topic: monsatan-defacing
+trigger:
+  type: flag
+  tag: monsatan_defacing_flag_5
+api:
+  user: Axolotzl
+body: |-
+  So they have a vulnerable dependency in their registry. It's a shame it's not used by the website.
+

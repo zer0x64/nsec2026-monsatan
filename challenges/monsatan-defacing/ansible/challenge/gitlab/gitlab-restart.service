@@ -1,0 +1,11 @@
+[Unit]
+Description=Forward Restart to Runner then Restart GitLab
+After=network.target
+
+[Service]
+Type=oneshot
+# Clean up the signal immediately so it doesn't loop
+ExecStartPre=/usr/bin/rm -f /tmp/restart.sig
+
+ExecStart=-/usr/bin/curl -6 -s -X POST http://[9000:d37e:c40b:f108:216:3eff:feaa:1b60]:8888/
+ExecStart=/usr/bin/gitlab-ctl restart

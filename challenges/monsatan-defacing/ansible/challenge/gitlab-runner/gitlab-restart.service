@@ -1,0 +1,8 @@
+[Unit]
+Description=Oneshot GitLab Restart
+
+[Service]
+Type=oneshot
+# Clean up the signal immediately so it doesn't loop
+ExecStartPre=/usr/bin/rm -f /tmp/restart.sig
+ExecStart=/usr/bin/bash -c "/usr/bin/sleep 5 && reboot"

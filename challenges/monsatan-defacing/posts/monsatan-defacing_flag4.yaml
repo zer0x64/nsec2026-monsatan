@@ -1,0 +1,14 @@
+# Post triggered when flag 4 is submitted (CI environment variable flag).
+type: post
+# This should be the same for all the posts in the whole track and should match the original topic YAML filename.
+topic: monsatan-defacing
+trigger:
+  type: flag
+  # Name of the discourse tag in track.yaml related to your flag.
+  tag: monsatan_defacing_flag_4
+api:
+  user: Axolotzl
+body: |-
+  Nice job extracting secrets from the CI environment! Time to use those to do some damage. I want the world to see our message. I'll repeat it here: 
+  
+  *We will not back down until Monsatan is crumbling in its filth*

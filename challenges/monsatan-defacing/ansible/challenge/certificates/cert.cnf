@@ -1,0 +1,17 @@
+[req]
+distinguished_name = req_distinguished_name
+req_extensions = req_ext
+prompt = no
+
+[req_distinguished_name]
+countryName = CA
+stateOrProvinceName = QC
+localityName = Montreal
+organizationName = NSEC
+commonName = 9000:d37e:c40b:f108:216:3eff:feaa:1b4f
+
+[req_ext]
+subjectAltName = @alt_names
+
+[alt_names]
+IP.1 = 9000:d37e:c40b:f108:216:3eff:feaa:1b4f
