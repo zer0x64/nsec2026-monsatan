@@ -45,11 +45,16 @@ ctf deploy --tracks monsatan-mailserver
 ```
 3. Cry.
 
+## Difference from CTF for monsatan-defacing
+
+1. Self-signed certificates are used instead of ones signed by Northsec
+2. When deployed locally, DNS entries likely won't work. It could lead to some links in GitLab not working. You can either set local entries or use the container's IP instead of the `.ctf` domain in the browsers.
+
 ## Other challenges and credits
 
 `monsatan-kiosk` was a physical kiosk escape. It cannot really be deployed locally.  
 `monsatan-impact-study` was made by [MOBergeron](https://github.com/MOBergeron), who decided to keep the track closed source to avoid spoiling the challenge for other online players.  
-`monsatan-defacing` was made by [junior-n30](https://github.com/junior-n30), who told me he'll open source it soon on his hown github account. I will update the README once it's available.  
+`monsatan-defacing` was made by [junior-n30](https://github.com/junior-n30). Included in this repo.
 `monsatan-sprinklers` was made by [olipro007](https://github.com/olipro007), however in this case, the code is available directly in this repo to avoid fragmenting the codebase.  
 The other challenges in this repo were made by me: [zer0x64](https://github.com/zer0x64)
 

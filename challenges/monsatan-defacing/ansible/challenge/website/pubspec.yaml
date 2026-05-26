@@ -1,0 +1,45 @@
+name: monsatan_website
+description: "Monsatan Corporation — Official Website. Growing Tomorrow's World Today™."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Typography
+  google_fonts: ^6.2.1
+
+  # Declarative animations
+  flutter_animate: ^4.5.0
+
+  # Typewriter and other text animations
+  animated_text_kit: ^4.2.2
+
+  # Client-side routing
+  go_router: ^14.0.0
+
+  # Image carousel for testimonials
+  carousel_slider: ^5.0.0
+
+  # Scroll-triggered animation support
+  visibility_detector: ^0.4.0+2
+
+  # Checks whether an integer is even — used for alternating card styles
+  is_even: ^1.0.1
+
+  # Cupertino icons (included by default)
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/

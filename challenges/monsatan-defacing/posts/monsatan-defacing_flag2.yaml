@@ -1,0 +1,12 @@
+# Post triggered when flag 2 is submitted ( Found in a file in the commit history).
+type: post
+topic: monsatan-defacing
+trigger:
+  type: flag
+  tag: monsatan_defacing_flag_2
+api:
+  user: Axolotzl
+body: |-
+  Everybody should know that deleting a file doesn't erase history. That's git 101. That Ori person thought that a `git rm` would make everything disappear. Now we got our lead.
+  
+  That token was rotated. But we have credentials, and they have a repository. There's a pipeline there that automatically builds and deploys the website. This may be exploited to publish our message.

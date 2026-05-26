@@ -1,0 +1,264 @@
+# This Ansible script is used to compile your challenge, create an archive and extract that archive on to the local host.
+# This script builds a frontend using NPM and a Rust program. Change it as per your needs.
+- name: "Build container"
+  hosts: "build-container"
+  vars_files:
+    - ../track.yaml
+  tasks:
+    - name: "Load flags"
+      loop: "{{ flags }}"
+      vars:
+        key: "{{ (item.tags).discourse }}"
+        value: "{{ item.flag }}"
+      ansible.builtin.set_fact:
+        track_flags: "{{ track_flags | default({}) | combine({key: value}) }}"
+
+    - name: Check if IPv4 address is set
+      ansible.builtin.debug:
+        msg: IPv4 address is set
+      when: ansible_all_ipv4_addresses | length > 0
+
+    - name: Initial System Upgrade
+      ansible.builtin.apt:
+        update_cache: true
+        install_recommends: false
+        upgrade: full
+
+    # Install the tools required to compile your code such as npm, nodejs, gcc...
+    - name: Install dependencies to build the track
+      ansible.builtin.apt:
+        name:
+          - gcc
+          - curl
+          - gnupg
+          - git
+          - unzip
+          - xz-utils
+          - zip
+          - libglu1-mesa
+        state: present
+
+    # - name: Get dart apt key
+    #   ansible.builtin.shell:
+    #     cmd: "curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/dart.gpg"
+    #     creates: /usr/share/keyrings/dart.gpg
+
+    # - name: Add dart apt repository
+    #   ansible.builtin.apt_repository:
+    #     repo: "deb [signed-by=/usr/share/keyrings/dart.gpg arch=amd64] https://storage.googleapis.com/download.dartlang.org/linux/debian stable main"
+    #     state: present
+
+    # - name: Install dart
+    #   ansible.builtin.apt:
+    #     name:
+    #       - dart
+    #     state: present
+    #     update_cache: true
+
+    - name: Check if flutter is installed
+      ansible.builtin.stat:
+        path: /usr/local/flutter/bin/flutter
+      register: flutter_bin
+
+    - name: Install Flutter
+      when: not flutter_bin.stat.exists
+      block:
+        - name: Ensure old arhcives are removed
+          ansible.builtin.file:
+            path: /tmp/flutter_linux.tar.xz
+            state: absent
+
+        - name: Ensure pruned Flutter SDK is removed
+          ansible.builtin.file:
+            path: /tmp/flutter.tar
+            state: absent
+
+        - name: Download Flutter SDK
+          ansible.builtin.get_url:
+            url: https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.41.4-stable.tar.xz
+            dest: /tmp/flutter_linux.tar.xz
+            mode: "0755"
+            force: true
+
+        - name: Extract Flutter SDK
+          ansible.builtin.unarchive:
+            src: /tmp/flutter_linux.tar.xz
+            dest: /usr/local
+            remote_src: true
+            owner: root
+            group: root
+            mode: "0755"
+            creates: /usr/local/flutter/bin/flutter
+
+        - name: Pre-cache web artifacts only
+          ansible.builtin.shell: |
+            /usr/local/flutter/bin/flutter config --no-analytics
+            /usr/local/flutter/bin/flutter precache --web --no-android --no-ios
+          args:
+            executable: /bin/bash
+
+        - name: Delete unused engine artifacts to save space
+          ansible.builtin.shell: |
+            rm -rf /usr/local/flutter/bin/cache/artifacts/engine/android*
+            rm -rf /usr/local/flutter/bin/cache/artifacts/engine/ios*
+            rm -rf /usr/local/flutter/bin/cache/artifacts/engine/macos*
+            rm -rf /usr/local/flutter/bin/cache/artifacts/engine/windows*
+          args:
+            executable: /bin/bash
+
+    - name: Create flutter archive for CI runner
+      community.general.archive:
+        path: /usr/local/flutter
+        dest: /tmp/flutter.tar
+        format: tar
+        mode: "0644"
+
+    - name: Fetch flutter archive
+      ansible.builtin.fetch:
+        src: /tmp/flutter.tar
+        dest: /tmp/nsec/flutter.tar
+        flat: true
+
+    - name: Check if cargo is installed
+      ansible.builtin.stat:
+        path: /root/.cargo/bin/cargo
+      register: cargo_exists
+
+    - name: Download Cargo Installer
+      ansible.builtin.get_url:
+        url: https://sh.rustup.rs
+        dest: /tmp/sh.rustup.rs
+        mode: "0755"
+        force: true
+      when: not cargo_exists.stat.exists
+      tags:
+        - rust
+
+    - name: Install Cargo
+      when: not cargo_exists.stat.exists
+      ansible.builtin.command: /tmp/sh.rustup.rs -y
+      register: my_output
+      changed_when: my_output.rc != 0
+      tags:
+        - rust
+
+    - name: Create dist directory
+      ansible.builtin.file:
+        path: /tmp/dist
+        state: directory
+        mode: "0755"
+
+    - name: Copy the dartreg sources
+      ansible.builtin.copy:
+        src: challenge/dartreg/
+        dest: /tmp/dartreg/
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Build dartreg
+      ansible.builtin.command:
+        cmd: /root/.cargo/bin/cargo build --release
+        chdir: /tmp/dartreg
+      register: my_output
+      changed_when: my_output.rc != 0
+
+    - name: Copy dartreg binary
+      ansible.builtin.copy:
+        remote_src: true
+        src: /tmp/dartreg/target/release/dartreg
+        dest: /tmp/dist/
+        owner: root
+        group: root
+        mode: "0744"
+
+    # Create a TAR archive with the compiled program
+    - name: Create archive of dartreg build
+      community.general.archive:
+        path: /tmp/dist/dartreg
+        dest: /tmp/dartreg.tar
+        format: tar
+        mode: "0644"
+
+    # Extract the archive from the build container and save it on the local host
+    - name: Fetch archive
+      ansible.builtin.fetch:
+        src: /tmp/dartreg.tar
+        dest: /tmp/nsec/dartreg.tar
+        flat: true
+
+    - name: Copy the website-server sources
+      ansible.builtin.copy:
+        src: challenge/website-server/
+        dest: /tmp/website-server/
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Build website-server
+      ansible.builtin.command:
+        cmd: /root/.cargo/bin/cargo build --release
+        chdir: /tmp/website-server
+      register: my_output
+      changed_when: my_output.rc != 0
+
+    - name: Copy website-server binary
+      ansible.builtin.copy:
+        remote_src: true
+        src: /tmp/website-server/target/release/website-server
+        dest: /tmp/dist/website-server
+        owner: root
+        group: root
+        mode: "0744"
+
+    # Create a TAR archive with the compiled program
+    - name: Create archive of website-server build
+      community.general.archive:
+        path: /tmp/dist/website-server
+        dest: /tmp/website-server.tar
+        format: tar
+        mode: "0644"
+
+    # Extract the archive from the build container and save it on the local host
+    - name: Fetch archive
+      ansible.builtin.fetch:
+        src: /tmp/website-server.tar
+        dest: /tmp/nsec/website-server.tar
+        flat: true
+
+    - name: Copy the website sources
+      ansible.builtin.copy:
+        src: challenge/website/
+        dest: /tmp/website/
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Build website
+      ansible.builtin.command:
+        cmd: /usr/local/flutter/bin/flutter build web
+        chdir: /tmp/website
+
+    - name: Copy website build
+      ansible.builtin.copy:
+        remote_src: true
+        src: /tmp/website/build/web/
+        dest: /tmp/dist/website/
+        owner: root
+        group: root
+        mode: "0744"
+
+    # Create a TAR archive with the compiled program
+    - name: Create archive of website build
+      community.general.archive:
+        path: /tmp/dist/website
+        dest: /tmp/website.tar
+        format: tar
+        mode: "0644"
+
+    # Extract the archive from the build container and save it on the local host
+    - name: Fetch archive
+      ansible.builtin.fetch:
+        src: /tmp/website.tar
+        dest: /tmp/nsec/website.tar
+        flat: true

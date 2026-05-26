@@ -1,0 +1,13 @@
+# Post triggered when flag 1 is submitted (found in the GitLab README).
+type: post
+topic: monsatan-defacing
+trigger:
+  type: flag
+  tag: monsatan_defacing_flag_1
+api:
+  user: Axolotzl
+body: |-
+  You got access to the source code. This is an excellent start. Time to dig.
+  
+  On my side, I found an endpoint that restarts their GitLab server. I think it could be useful if you start getting 
+  issues with the website. You simply need to send a POST request to `gitlab.monsatan.ctf:8888`.

@@ -1,0 +1,138 @@
+name: monsatan-defacing
+description: "Deface the company website"
+# Set to true when the person responsible of the theme has fully integrated the track with the scenario, which implies he wrote the discourse posts.
+integrated_with_scenario: true
+
+contacts:
+  # Who created the challenges. Use either handles or real names.
+  dev:
+    - zer0x64 (Philippe Dugre)
+    - junior_n30 (Jean-Francois Blain)
+  # Who did/does quality assurance on the challenge
+  qa:
+    - zer0x64 (Philippe Dugre)
+    - twisted (Simon Bouchard)
+  # Who can offer support regarding the challenge during the CTF.
+  support:
+    - zer0x64 (Philippe Dugre)
+    - olipro007 (Olivier St-Jean)
+    - junior_n30 (Jean-Francois Blain)
+
+flags:
+  # The flag string
+  - flag: FLAG-{5b1f539e271e02b0b9ca87e310af0e29}
+    # How many points for the flag
+    value: 2
+    # Description of the flag. This text will be displayed to the participants AFTER they submit the flag if they run the `askgod history` command.
+    description: Found in the README of the gitlab server
+    # The text the participants see AFTER they submit the flag.
+    return_string: "[monsatan-defacing] 1/6 did they really let that public?"
+    # CFSS string based on https://github.com/res260/cfss
+    cfss: "CFSS:0.3/TS:B/E:L/HSFC:N=2-4"
+    tags:
+      # Name of the discourse trigger for this flag. If a discourse post in the posts/ directory has this trigger, it will be posted when this flag is submitted.
+      # This value can also be used to reference flags in Ansible playbooks. See the "Load Flags" task in deploy.yaml.
+      discourse: monsatan_defacing_flag_1
+  # The flag string
+  - flag: FLAG-{j2970ax5s3zq6k17l97jg2k84hd12o9f}
+    # How many points for the flag
+    value: 1
+    # Description of the flag. This text will be displayed to the participants AFTER they submit the flag if they run the `askgod history` command.
+    description: Found in a file in the commit history.
+    # The text the participants see AFTER they submit the flag.
+    return_string: "[monsatan-defacing] 2/6 There's always that one guy who commits a token..."
+    # CFSS string based on https://github.com/res260/cfss
+    cfss: "CFSS:0.3/TS:L/E:L/HSFC:N=1-2"
+    tags:
+      # Name of the discourse trigger for this flag. If a discourse post in the posts/ directory has this trigger, it will be posted when this flag is submitted.
+      # This value can also be used to reference flags in Ansible playbooks. See the "Load Flags" task in deploy.yaml.
+      discourse: monsatan_defacing_flag_2
+    # The flag string
+  - flag: FLAG-{2247bff241800150a5ebb00288dc050d}
+    # How many points for the flag
+    value: 3
+    # Description of the flag. This text will be displayed to the participants AFTER they submit the flag if they run the `askgod history` command.
+    description: Call the print_flag command from the CI
+    return_string: "[monsatan-defacing] 3/6 (BONUS) Always a good thing to see what's available"
+    # CFSS string based on https://github.com/res260/cfss
+    cfss: "CFSS:0.3/TS:B/E:L/HSFC:N=2-4"
+    tags:
+      # Name of the discourse trigger for this flag. If a discourse post in the posts/ directory has this trigger, it will be posted when this flag is submitted.
+      # This value can also be used to reference flags in Ansible playbooks. See the "Load Flags" task in deploy.yaml.
+      discourse: monsatan_defacing_flag_3
+    # The flag string
+  - flag: FLAG-{136da0151bcdd1dfa3386519c98684af}
+    # How many points for the flag
+    value: 5
+    # Description of the flag. This text will be displayed to the participants AFTER they submit the flag if they run the `askgod history` command.
+    description: Extracted from the CI env variable
+    # The text the participants see AFTER they submit the flag.
+    return_string: "[monsatan-defacing] 4/6 the most permanent solution is a temporary one"
+    # CFSS string based on https://github.com/res260/cfss
+    cfss: "CFSS:0.3/TS:B/E:M/HSFC:N=4-7"
+    tags:
+      # Name of the discourse trigger for this flag. If a discourse post in the posts/ directory has this trigger, it will be posted when this flag is submitted.
+      # This value can also be used to reference flags in Ansible playbooks. See the "Load Flags" task in deploy.yaml.
+      discourse: monsatan_defacing_flag_4
+  - flag: FLAG-{8a8c0784c7f3e9ee548aa4d8bab836e1}
+    # How many points for the flag
+    value: 3
+    # Description of the flag. This text will be displayed to the participants AFTER they submit the flag if they run the `askgod history` command.
+    description: Found in the security advisory of a test package in the dart registry.
+    # The text the participants see AFTER they submit the flag.
+    return_string: "[monsatan-defacing] 5/6 (BONUS) Didn't find a vulnerable package, but found a flag. Good enough?"
+    # CFSS string based on https://github.com/res260/cfss
+    cfss: "CFSS:0.3/TS:B/E:L/HSFC:N=2-4"
+    tags:
+      # Name of the discourse trigger for this flag. If a discourse post in the posts/ directory has this trigger, it will be posted when this flag is submitted.
+      # This value can also be used to reference flags in Ansible playbooks. See the "Load Flags" task in deploy.yaml.
+      discourse: monsatan_defacing_flag_5
+    # The flag string
+  - flag: FLAG-{4f2cf974cb28e5e8389fadbde2a5a978}
+    # How many points for the flag
+    value: 7
+    # Description of the flag. This text will be displayed to the participants AFTER they submit the flag if they run the `askgod history` command.
+    description: Injected in the manifesto once the defacing is done
+    # The text the participants see AFTER they submit the flag.
+    return_string: "[monsatan-defacing] 6/6 why would you need a dependency for a modulo?"
+    # CFSS string based on https://github.com/res260/cfss
+    cfss: "CFSS:0.3/TS:I/E:M/HSFC:N=6-10"
+    tags:
+      # Name of the discourse trigger for this flag. If a discourse post in the posts/ directory has this trigger, it will be posted when this flag is submitted.
+      # This value can also be used to reference flags in Ansible playbooks. See the "Load Flags" task in deploy.yaml.
+      discourse: monsatan_defacing_flag_6
+      ui_gif: grafiti.gif
+
+services:
+  # List of network services running for the track.
+  # Each service name must be unique for a given instance (container/VM).
+  - name: HTTP
+    # Name of the container or VM
+    instance: monsatan-defacing
+    # The IPv6 address was randomly generated from the MAC Address (hwaddr) and the subnets defined in main.tf.
+    # If you need other machines, you can choose another MAC Address and get the IPv6 from the MAC AND the IPv6 subnet (9000:d37e:c40b:f108) at https://eui64-calc.princelle.org/
+    address: "9000:d37e:c40b:f108:216:3eff:fe19:738e"
+    # On what port does the service listens to
+    port: 80
+    # For automated checks during the CTF. This alerts us if something is wrong with the service.
+    check: http
+  - name: Dart-Registry
+    # Name of the container or VM
+    instance: monsatan-defacing-dartreg
+    # The IPv6 address was randomly generated from the MAC Address (hwaddr) and the subnets defined in main.tf.
+    # If you need other machines, you can choose another MAC Address and get the IPv6 from the MAC AND the IPv6 subnet (9000:d37e:c40b:f108) at https://eui64-calc.princelle.org/
+    address: "9000:d37e:c40b:f108:216:3eff:feaa:1b4f"
+    # On what port does the service listens to
+    port: 80
+    # For automated checks during the CTF. This alerts us if something is wrong with the service.
+    check: http
+  - name: GitLab
+    # Name of the container or VM
+    instance: monsatan-defacing-gitlab
+    # The IPv6 address was randomly generated from the MAC Address (hwaddr) and the subnets defined in main.tf.
+    # If you need other machines, you can choose another MAC Address and get the IPv6 from the MAC AND the IPv6 subnet (9000:d37e:c40b:f108) at https://eui64-calc.princelle.org/
+    address: "9000:d37e:c40b:f108:216:3eff:feaa:1b50"
+    # On what port does the service listens to
+    port: 80
+    # For automated checks during the CTF. This alerts us if something is wrong with the service.
+    check: http
